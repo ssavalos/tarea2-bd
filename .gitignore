@@ -1,0 +1,11 @@
+# Archivos sensibles
+.env
+config.php
+
+# Archivos del sistema
+Thumbs.db
+.DS_Store
+
+# Dependencias
+vendor/
+node_modules/
