@@ -1,3 +1,5 @@
+// aqui va el home + buscador simple
+
 <?php
 include 'db.php';
 

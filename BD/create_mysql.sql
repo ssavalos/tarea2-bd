@@ -110,24 +110,3 @@ CREATE TABLE Asignacion_Error (
 ) ENGINE=InnoDB;
 
 SET FOREIGN_KEY_CHECKS = 1;
-
--- ====== Seeds mínimos para probar rápido ======
-INSERT INTO Topico (nombre_topico) VALUES ('Backend'),('Seguridad'),('UX/UI');
-
-INSERT INTO Usuario (user_rut, user_nombre, user_email)
-VALUES ('12345678-9','Usuario Demo','demo@correo.com');
-
-INSERT INTO Ingeniero (ing_rut, nombre_ing, email_ing)
-VALUES ('98765432-K','Ing Demo','ing@correo.com');
-
-INSERT INTO Funcionalidad (titulo_funcion,ambiente_funcion,resumen_funcion,estado_funcion,fecha_funcion,id_topico,user_rut)
-VALUES ('Agregar búsqueda avanzada por filtros','Web','Permitir filtrar por fecha, estado y tópico','Abierto','2025-10-01',1,'12345678-9');
-
-INSERT INTO Criterio_Aceptacion (descripcion_criterio,id_funcionalidad)
-VALUES ('Debe filtrar por fecha',1),('Debe filtrar por estado',1),('Debe filtrar por tópico',1);
-
-INSERT INTO ErrorBug (titulo_error,descripcion_error,fecha_error,estado_error,id_topico,user_rut)
-VALUES ('NullPointer al crear solicitud','Se lanza excepción al guardar registro','2025-10-02','Abierto',2,'12345678-9');
-
-INSERT INTO Asignacion_Funcionalidad (id_funcionalidad, ing_rut) VALUES (1,'98765432-K');
-INSERT INTO Asignacion_Error (id_bug, ing_rut) VALUES (1,'98765432-K');
