@@ -16,9 +16,13 @@ if (isset($_GET['logout']) && $_GET['logout'] === 'success') {
     </script>";
 }
 
-// Si ya hay sesión iniciada, redirige a la página principal
+// Si ya hay sesión iniciada, redirige al dashboard correspondiente
 if (isset($_SESSION['rol'])) {
-    header("Location: main.php");
+    if ($_SESSION['rol'] === 'ingeniero') {
+        header("Location: ingDashboard.php");
+    } else {
+        header("Location: userDashboard.php");
+    }
     exit;
 }
 
@@ -50,8 +54,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['nombre'] = $user['nombre_completo'];
             $_SESSION['rol'] = $user['rol'];
 
-            // Redirigir a la página principal
-            header("Location: main.php");
+            // Redirigir según el rol del usuario
+            if ($user['rol'] === 'ingeniero') {
+                header("Location: ingDashboard.php");
+            } else {
+                header("Location: userDashboard.php");
+            }
             exit;
         } else {
             $errors[] = "Contraseña incorrecta.";

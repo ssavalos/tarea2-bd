@@ -26,9 +26,15 @@ if (isset($_SESSION['rol'])):
             <h3><i class="fas fa-database"></i> Sistema BD</h3>
         </div>
         <div class="nav-links">
-            <a href="<?php echo (isset($nav_path) ? $nav_path : '../') . 'main.php'; ?>" class="nav-button">
-                <i class="fas fa-home"></i> Inicio
-            </a>
+            <?php if ($_SESSION['rol'] === 'ingeniero'): ?>
+                <a href="<?php echo (isset($nav_path) ? $nav_path : '../') . 'ingDashboard.php'; ?>" class="nav-button">
+                    <i class="fas fa-home"></i> Dashboard
+                </a>
+            <?php else: ?>
+                <a href="<?php echo (isset($nav_path) ? $nav_path : '../') . 'userDashboard.php'; ?>" class="nav-button">
+                    <i class="fas fa-home"></i> Dashboard
+                </a>
+            <?php endif; ?>
             
             <?php if ($_SESSION['rol'] === 'usuario'): ?>
                 <a href="<?php echo (isset($nav_path) ? $nav_path : '../') . 'funcionalidad/listar.php'; ?>" class="nav-button">
