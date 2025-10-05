@@ -1,16 +1,17 @@
 <?php
-// db.php → conexión a MySQL con mysqli
+// db.php → conexión a MySQL con mysqli (versión para MAMP)
 
-$host = "localhost";   // Servidor de MySQL (en XAMPP es siempre localhost)
-$user = "root";        // Usuario por defecto en XAMPP
-$pass = "";            // Contraseña (en XAMPP normalmente está en blanco)
-$db   = "tarea2";      // Nombre de la base de datos que crearás en phpMyAdmin
+$host = "localhost";
+$user = "root";
+$pass = "root";      // ✅ MAMP usa 'root' como contraseña
+$db   = "tarea2";
+$port = 8889;        // ✅ puerto por defecto de MySQL en MAMP
 
-$conn = new mysqli($host, $user, $pass, $db);
+$conn = new mysqli($host, $user, $pass, $db, $port);
 
 // Verificar conexión
 if ($conn->connect_error) {
     die("Error de conexión: " . $conn->connect_error);
 }
-//echo "✅ Conectado a MySQL correctamente"; // úsalo para probar
+// echo "✅ Conectado a MySQL correctamente";
 ?>
