@@ -19,95 +19,19 @@ $rol = $_SESSION['rol'];
     <title>Página Principal - Tarea 2</title>
     <!-- Font Awesome para iconos -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Estilos comunes -->
+    <link rel="stylesheet" href="assets/css/style.css">
     <style>
-        body { 
-            font-family: Arial, sans-serif; 
-            background: #f0f0f0; 
-            margin: 0;
-            padding: 20px;
-        }
-        .main-container { 
-            background: white; 
-            padding: 40px; 
-            border-radius: 8px; 
-            box-shadow: 0 0 10px rgba(0,0,0,0.2); 
-            max-width: 800px;
-            margin: 0 auto;
-        }
-        h1 {
-            text-align: center;
-            color: #333;
-            margin-bottom: 30px;
-            font-size: 36px;
-        }
-        .welcome-message {
-            text-align: center;
-            font-size: 18px;
-            color: #666;
-            margin-bottom: 40px;
-        }
-        .user-info {
-            background: #e6ffe6;
-            padding: 20px;
-            border-radius: 6px;
-            border-left: 4px solid #00ff59ff;
-            margin-bottom: 30px;
-        }
-        .user-info h3 {
-            margin: 0 0 10px 0;
-            color: #00b383b8;
-        }
-        .user-info p {
-            margin: 5px 0;
-            color: #555;
-        }
-        .role-badge {
-            display: inline-block;
-            background: #00ff59ff;
-            color: white;
-            padding: 5px 12px;
-            border-radius: 15px;
-            font-size: 14px;
-            font-weight: bold;
-            text-transform: capitalize;
-        }
-        .navigation {
-            display: flex;
-            gap: 15px;
-            justify-content: center;
-            margin-top: 30px;
-        }
-        .nav-button {
-            background: #00ff59ff;
-            color: white;
-            padding: 12px 24px;
-            border: none;
-            border-radius: 5px;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            cursor: pointer;
-            transition: background 0.3s ease;
-            font-size: 16px;
-        }
-        .nav-button:hover {
-            background: #00b383b8;
-        }
-        .logout-button {
-            background: #dc3545;
-        }
-        .logout-button:hover {
-            background: #c82333;
-        }
+        /* Estilos específicos para main */
         .provisional-note {
             text-align: center;
             color: #999;
             font-style: italic;
             margin-top: 40px;
             padding: 20px;
-            background: #f8f9fa;
+            background: rgba(248, 249, 250, 0.8);
             border-radius: 5px;
+            backdrop-filter: blur(5px);
         }
     </style>
 </head>

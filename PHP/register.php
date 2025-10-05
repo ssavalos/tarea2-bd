@@ -106,159 +106,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
 <meta charset="UTF-8">
 <title>Registro</title>
-<!-- Font Awesome para iconos -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Font Awesome para iconos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Estilos comunes -->
+    <link rel="stylesheet" href="assets/css/style.css">
+    <!-- Script para formateo de RUT -->
+    <script src="assets/js/rut-formatter.js"></script>
 <style>
-    body { 
-        font-family: Arial, sans-serif; 
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    /* Estilos específicos solo para registro */
+    body {
         display: flex; 
         justify-content: center; 
         align-items: center; 
         min-height: 100vh; 
-        margin: 0;
         padding: 20px 0;
-        position: relative;
     }
     
-    /* Efecto de partículas/patrón opcional */
-    body::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background-image: 
-            radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
-            radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
-            radial-gradient(circle at 40% 40%, rgba(120, 119, 198, 0.2) 0%, transparent 50%);
-        pointer-events: none;
-    }
-    
-    .register-container { 
-        background: rgba(255, 255, 255, 0.95); 
-        backdrop-filter: blur(10px);
-        padding: 35px; 
-        border-radius: 15px; 
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3); 
-        width: 350px; 
-        max-width: 90%;
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        position: relative;
-        z-index: 1;
-    }
-    
-    input[type="text"], input[type="password"], input[type="email"], select { 
-        width: calc(100% - 16px); 
-        padding: 10px 8px; 
-        margin: 8px 0; 
-        border: 1px solid #ddd;
-        border-radius: 4px;
-        box-sizing: border-box;
-        font-size: 14px;
-    }
-    
-    .password-container {
-        position: relative;
-        display: block;
-        margin: 8px 0;
-    }
-    
-    .password-container input[type="password"], 
-    .password-container input[type="text"] {
-        width: calc(100% - 16px);
-        padding: 10px 35px 10px 8px;
-        margin: 0;
-    }
-    
-    .password-toggle {
-        position: absolute;
-        right: 15px;
-        top: 50%;
-        transform: translateY(-50%);
-        cursor: pointer;
-        user-select: none;
-        color: #666;
-        font-size: 16px;
-        transition: color 0.3s ease;
-    }
-    
-    .password-toggle:hover {
-        color: #00ff59ff;
-    }
-    
-    .password-toggle i {
-        pointer-events: none;
-    }
-    
-    button { 
-        width: 100%; 
-        padding: 12px; 
-        background: #00ff59ff; 
-        color: white; 
-        border: none; 
-        cursor: pointer; 
-        border-radius: 4px;
-        font-size: 16px;
-        margin: 15px 0 10px 0;
-        font-weight: bold;
-    }
-    
-    button:hover { 
-        background: #00b383b8; 
-    }
-    
-    .error-list {
-        color: red;
-        margin: 15px 0;
-        padding: 0;
-        list-style-type: none;
-    }
-    
-    .error-list li {
-        background: #ffe6e6;
-        padding: 10px;
-        margin: 5px 0;
-        border-radius: 4px;
-        border-left: 4px solid red;
-        font-size: 14px;
-    }
-    
-    .success-message {
-        color: #00b383b8;
-        background: #e6ffe6;
-        padding: 10px;
-        margin: 15px 0;
-        border-radius: 4px;
-        border-left: 4px solid #00ff59ff;
-        font-size: 14px;
-    }
-    
-    h2 {
-        text-align: center;
-        color: #333;
-        margin-bottom: 25px;
-        font-size: 24px;
-    }
-    
-    p {
-        text-align: center;
-        margin-top: 20px;
-        font-size: 14px;
-    }
-    
-    a {
-        color: #00ff59ff;
-        text-decoration: none;
-        font-weight: bold;
-    }
-    
-    a:hover {
-        color: #00b383b8;
-        text-decoration: underline;
-    }
-    
+    /* Labels específicos para el registro */
     label {
         display: block;
         margin-bottom: 15px;
@@ -266,14 +130,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         color: #555;
         font-size: 14px;
     }
-    
-    select {
-        padding: 10px 8px;
-    }
-     body {
-        background: url('assets/images/fondo.png') center/cover no-repeat;
-        background-attachment: fixed;
-        }
 </style>
 </head>
 <body>
@@ -297,7 +153,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <form method="POST">
             <label>
                 RUT:
-                <input type="text" name="rut" placeholder="Ej: 12345678-9" required value="<?php echo isset($_POST['rut']) ? htmlspecialchars($_POST['rut']) : ''; ?>" maxlength="12">
+                <div class="rut-input">
+                    <input type="text" name="rut" placeholder="Ej: 12345678-9" required value="<?php echo isset($_POST['rut']) ? htmlspecialchars($_POST['rut']) : ''; ?>" data-rut>
+                </div>
             </label>
             
             <label>

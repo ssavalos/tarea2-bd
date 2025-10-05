@@ -67,137 +67,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <title>Login - Tarea 2</title>
     <!-- Font Awesome para iconos -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Estilos comunes -->
+    <link rel="stylesheet" href="assets/css/style.css">
+    <!-- Script para formateo de RUT -->
+    <script src="assets/js/rut-formatter.js"></script>
     <style>
-        body { 
-            font-family: Arial, sans-serif; 
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        /* Estilos específicos solo para login */
+        body {
             display: flex; 
             justify-content: center; 
             align-items: center; 
             height: 100vh; 
-            margin: 0;
-            position: relative;
-        }
-        
-        /* Efecto de partículas/patrón opcional */
-        body::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-image: 
-                radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
-                radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
-                radial-gradient(circle at 40% 40%, rgba(120, 119, 198, 0.2) 0%, transparent 50%);
-            pointer-events: none;
-        }
-        .login-container { 
-            background: rgba(255, 255, 255, 0.95); 
-            backdrop-filter: blur(10px);
-            padding: 30px; 
-            border-radius: 15px; 
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3); 
-            width: 300px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            position: relative;
-            z-index: 1;
-        }
-        input[type="text"], input[type="password"] { 
-            width: calc(100%); 
-            padding: 8px; 
-            margin: 8px 0; 
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            box-sizing: border-box;
-        }
-        .password-container {
-            position: relative;
-            display: block;
-            margin: 8px 0;
-        }
-        .password-container input[type="password"], 
-        .password-container input[type="text"] {
-            width: calc(100%);
-            padding: 8px 35px 8px 8px;
-            margin: 0;
-        }
-        .password-toggle {
-            position: absolute;
-            right: 15px;
-            top: 50%;
-            transform: translateY(-50%);
-            cursor: pointer;
-            user-select: none;
-            color: #666;
-            font-size: 16px;
-            transition: color 0.3s ease;
-        }
-        .password-toggle:hover {
-            color: #0059ffff;
-        }
-        .password-toggle i {
-            pointer-events: none;
-        }
-        button { 
-            width: 100%; 
-            padding: 10px; 
-            background: #0059ffff;; 
-            color: white; 
-            border: none; 
-            cursor: pointer; 
-            border-radius: 4px;
-            font-size: 16px;
-            margin: 8px 0;
-        }
-        button:hover { 
-            background: #2a00b3b8; 
-        }
-        .error-list {
-            color: red;
-            margin: 10px 0;
             padding: 0;
-            list-style-type: none;
-        }
-        .error-list li {
-            background: #ffe6e6;
-            padding: 8px;
-            margin: 4px 0;
-            border-radius: 4px;
-            border-left: 4px solid red;
-        }
-        .success-message {
-            background: #e6ffe6;
-            color: #2a00b3b8;
-            padding: 12px;
-            margin: 10px 0;
-            border-radius: 4px;
-            border-left: 4px solid #0059ffff;
-            font-size: 14px;
-            text-align: center;
-            font-weight: bold;
-        }
-        h2 {
-            text-align: center;
-            color: #333;
-            margin-bottom: 20px;
-        }
-        p {
-            text-align: center;
-            margin-top: 15px;
-        }
-        a {
-            color: #0059ffff;;
-            text-decoration: none;
-        }
-        a:hover {
-            color: #2a00b3b8;
-            text-decoration: underline;
-        }
-        body {
-        background: url('assets/images/fondo.png') center/cover no-repeat;
-        background-attachment: fixed;
         }
     </style>
 </head>
@@ -220,7 +101,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ?>
         
         <form method="POST">
-            <input type="text" name="rut" placeholder="RUT (Ej: 12345678-9)" required value="<?php echo isset($_POST['rut']) ? htmlspecialchars($_POST['rut']) : ''; ?>" maxlength="12">
+            <div class="rut-input">
+                <input type="text" name="rut" placeholder="RUT (Ej: 12345678-9)" required value="<?php echo isset($_POST['rut']) ? htmlspecialchars($_POST['rut']) : ''; ?>" data-rut>
+            </div>
             
             <div class="password-container">
                 <input type="password" name="password" id="password" placeholder="Contraseña" required>
