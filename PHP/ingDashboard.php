@@ -13,6 +13,30 @@ $rut = $_SESSION['rut'];
 $nombre = $_SESSION['nombre'];
 
 
+$ingeniero_info = null;
+$especialidades = [];
+
+$stmt = $conn->prepare("SELECT nombre_ing, email_ing FROM Ingeniero WHERE ing_rut = ?");
+if ($stmt) {
+    $stmt->bind_param("s", $rut);
+    if ($stmt->execute()) {
+        $result = $stmt->get_result();
+        $ingeniero_info = $result ? $result->fetch_assoc() : null;
+    }
+    $stmt->close();
+}
+
+$stmt = $conn->prepare("\n    SELECT t.nombre_topico\n    FROM Ingeniero_Especialidad ie\n    INNER JOIN Topico t ON ie.id_topico = t.id_topico\n    WHERE ie.ing_rut = ?\n");
+if ($stmt) {
+    $stmt->bind_param("s", $rut);
+    if ($stmt->execute()) {
+        $result = $stmt->get_result();
+        $especialidades = $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
+    }
+    $stmt->close();
+}
+
+
 $page_title = "ZeroPressure";
 ?>
 
@@ -226,6 +250,12 @@ $page_title = "ZeroPressure";
         
         <!-- Acciones Rápidas -->
         <div class="quick-actions">
+            <a href="funcionalidad/listar.php" class="action-btn">
+                <i class="fas fa-cogs"></i> Ver Funcionalidades
+            </a>
+            <a href="error/listar.php" class="action-btn">
+                <i class="fas fa-bug"></i> Ver Errores
+            </a>
             <a href="logout.php" class="action-btn secondary">
                 <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
             </a>

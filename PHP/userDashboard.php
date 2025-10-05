@@ -188,6 +188,12 @@ $page_title = "ZeroPressure";
         
         <!-- Acciones Rápidas -->
         <div class="quick-actions">
+            <a href="funcionalidad/listar.php" class="action-btn">
+                <i class="fas fa-cogs"></i> Ver Funcionalidades
+            </a>
+            <a href="error/listar.php" class="action-btn">
+                <i class="fas fa-bug"></i> Ver Errores
+            </a>
             <a href="logout.php" class="action-btn secondary">
                 <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
             </a>

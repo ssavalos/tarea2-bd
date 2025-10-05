@@ -20,7 +20,7 @@ DB_HOST = os.getenv("DB_HOST")
 DB_PORT = os.getenv("DB_PORT")
 
 if not all([DB_NAME, DB_USER, DB_PASS is not None, DB_HOST, DB_PORT]):
-    raise SystemExit("❌ Faltan variables de entorno DB_* en el archivo .env")
+    raise SystemExit("??? Faltan variables de entorno DB_* en el archivo .env")
 
 faker = Faker('es_ES')
 random.seed(42)
@@ -59,7 +59,7 @@ def main():
         cur.execute("DROP TRIGGER IF EXISTS trg_min_3_criterios")
         cur.execute("DROP TRIGGER IF EXISTS trg_max_2_especialidades")
         
-        # Tópicos
+        # T??picos
         topics = [
             (1, "Backend"), (2, "Seguridad"), (3, "UX/UI"), (4, "DevOps"),
             (5, "Machine Learning"), (6, "Testing"), (7, "Cloud"),
@@ -120,7 +120,7 @@ def main():
             if len(titulo) < 20:
                 titulo += " " + faker.word()
             titulo = titulo[:100]
-            ambiente = random.choice(["Web", "Móvil"])
+            ambiente = random.choice(["Web", "M??vil"])
             resumen = faker.sentence(nb_words=10)
             estado = random.choice(estados_func)
             id_topico = random.randint(1, NUM_TOPICS)
@@ -193,17 +193,17 @@ def main():
           DECLARE n INT;
           SELECT COUNT(*) INTO n FROM Ingeniero_Especialidad WHERE ing_rut = NEW.ing_rut;
           IF n >= 2 THEN
-            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Un ingeniero no puede tener más de 2 especialidades.';
+            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Un ingeniero no puede tener m??s de 2 especialidades.';
           END IF;
         END
         """)
         
         conn.commit()
-        print("✅ Poblamiento completado exitosamente")
+        print("Poblamiento completado exitosamente")
 
     except Exception as e:
         conn.rollback()
-        print("❌ Error:", e)
+        print("Error:", e)
     finally:
         cur.close()
         conn.close()

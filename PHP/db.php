@@ -1,11 +1,10 @@
 <?php
-// db.php → conexión a MySQL con mysqli (versión para MAMP)
 
 $host = "localhost";
 $user = "root";
-$pass = "root";      // ✅ MAMP usa 'root' como contraseña
+$pass = "";      // ✅ MAMP usa 'root' como contraseña, xampp usa "" (CAMBIA CUANDO USES)
 $db   = "tarea2";
-$port = 8889;        // ✅ puerto por defecto de MySQL en MAMP
+$port = 3306;        // ✅ puerto por defecto de MySQL en MAMP, xampp usa 3306 (CAMBIA CUANDO USES)
 
 $conn = new mysqli($host, $user, $pass, $db, $port);
 
