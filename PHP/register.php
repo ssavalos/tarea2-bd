@@ -3,20 +3,34 @@
 session_start();
 include 'db.php';
 
-$errors = [];
+$errors = array();
 $success = "";
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $username = trim($_POST['username']);
-    $password = $_POST['password'];
-    $password_confirm = $_POST['password_confirm'];
-    $rol = $_POST['rol'];
+    $rut = isset($_POST['rut']) ? trim($_POST['rut']) : '';
+    $nombre = isset($_POST['nombre']) ? trim($_POST['nombre']) : '';
+    $email = isset($_POST['email']) ? trim($_POST['email']) : '';
+    $password = isset($_POST['password']) ? $_POST['password'] : '';
+    $password_confirm = isset($_POST['password_confirm']) ? $_POST['password_confirm'] : '';
+    $rol = isset($_POST['rol']) ? $_POST['rol'] : '';
 
     // Validaciones básicas
-    if (strlen($username) < 3) {
-        $errors[] = "El nombre de usuario debe tener al menos 3 caracteres.";
+    // Validar formato de RUT
+    if (!preg_match('/^[0-9]{7,8}-[0-9Kk]$/', $rut)) {
+        $errors[] = "El RUT debe tener el formato: 12345678-9 o 1234567-K";
     }
 
+    // Validar nombre
+    if (strlen($nombre) < 2) {
+        $errors[] = "El nombre debe tener al menos 2 caracteres.";
+    }
+
+    // Validar email
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $errors[] = "El email no tiene un formato válido.";
+    }
+
+    // Validar contraseña
     if (strlen($password) < 6) {
         $errors[] = "La contraseña debe tener al menos 6 caracteres.";
     }
@@ -30,29 +44,59 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errors[] = "Las contraseñas no coinciden.";
     }
 
-    // Revisar si el username ya existe
-    $stmt = $conn->prepare("SELECT id FROM Auth_User WHERE username = ?");
-    $stmt->bind_param("s", $username);
+    // Revisar si el RUT ya existe en Auth_User
+    $stmt = $conn->prepare("SELECT id FROM Auth_User WHERE rut = ?");
+    $stmt->bind_param("s", $rut);
     $stmt->execute();
     $stmt->store_result();
     if ($stmt->num_rows > 0) {
-        $errors[] = "El nombre de usuario ya está en uso.";
+        $errors[] = "Este RUT ya está registrado.";
     }
     $stmt->close();
 
     // Insertar en la base si no hay errores
     if (empty($errors)) {
-        $password_hash = password_hash($password, PASSWORD_DEFAULT);
+        try {
+            // Iniciar transacción
+            $conn->autocommit(FALSE);
+            
+            $password_hash = password_hash($password, PASSWORD_DEFAULT);
 
-        // Nota: user_rut / ing_rut pueden ser NULL por ahora
-        $stmt = $conn->prepare("INSERT INTO Auth_User (username, pass_hash, rol) VALUES (?, ?, ?)");
-        $stmt->bind_param("sss", $username, $password_hash, $rol);
-        if ($stmt->execute()) {
+            // 1. Insertar en la tabla Usuario o Ingeniero según el rol
+            if ($rol === 'usuario') {
+                $stmt = $conn->prepare("INSERT INTO Usuario (user_rut, user_nombre, user_email) VALUES (?, ?, ?)");
+                $stmt->bind_param("sss", $rut, $nombre, $email);
+            } else { // ingeniero
+                $stmt = $conn->prepare("INSERT INTO Ingeniero (ing_rut, nombre_ing, email_ing) VALUES (?, ?, ?)");
+                $stmt->bind_param("sss", $rut, $nombre, $email);
+            }
+            
+            if (!$stmt->execute()) {
+                throw new Exception("Error al crear el perfil: " . $stmt->error);
+            }
+            $stmt->close();
+
+            // 2. Insertar en Auth_User
+            $stmt = $conn->prepare("INSERT INTO Auth_User (rut, pass_hash, rol) VALUES (?, ?, ?)");
+            $stmt->bind_param("sss", $rut, $password_hash, $rol);
+            
+            if (!$stmt->execute()) {
+                throw new Exception("Error al crear las credenciales: " . $stmt->error);
+            }
+            $stmt->close();
+
+            // Confirmar transacción
+            $conn->commit();
+            $conn->autocommit(TRUE);
+            
             $success = "Usuario registrado correctamente. Puedes <a href='index.php'>iniciar sesión</a>.";
-        } else {
-            $errors[] = "Error al registrar: " . $stmt->error;
+            
+        } catch (Exception $e) {
+            // Revertir transacción en caso de error
+            $conn->rollback();
+            $conn->autocommit(TRUE);
+            $errors[] = $e->getMessage();
         }
-        $stmt->close();
     }
 }
 ?>
@@ -91,6 +135,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             radial-gradient(circle at 40% 40%, rgba(120, 119, 198, 0.2) 0%, transparent 50%);
         pointer-events: none;
     }
+    
     .register-container { 
         background: rgba(255, 255, 255, 0.95); 
         backdrop-filter: blur(10px);
@@ -103,8 +148,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         position: relative;
         z-index: 1;
     }
-    input[type="text"], input[type="password"], select { 
-        width: calc(100%); 
+    
+    input[type="text"], input[type="password"], input[type="email"], select { 
+        width: calc(100% - 16px); 
         padding: 10px 8px; 
         margin: 8px 0; 
         border: 1px solid #ddd;
@@ -112,17 +158,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         box-sizing: border-box;
         font-size: 14px;
     }
+    
     .password-container {
         position: relative;
         display: block;
         margin: 8px 0;
     }
+    
     .password-container input[type="password"], 
     .password-container input[type="text"] {
-        width: calc(100%);
+        width: calc(100% - 16px);
         padding: 10px 35px 10px 8px;
         margin: 0;
     }
+    
     .password-toggle {
         position: absolute;
         right: 15px;
@@ -134,16 +183,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         font-size: 16px;
         transition: color 0.3s ease;
     }
+    
     .password-toggle:hover {
-        color: #0059ffff;;
+        color: #00ff59ff;
     }
+    
     .password-toggle i {
         pointer-events: none;
     }
+    
     button { 
         width: 100%; 
         padding: 12px; 
-        background: #0059ffff; 
+        background: #00ff59ff; 
         color: white; 
         border: none; 
         cursor: pointer; 
@@ -152,15 +204,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         margin: 15px 0 10px 0;
         font-weight: bold;
     }
+    
     button:hover { 
-        background: #2a00b3b8; 
+        background: #00b383b8; 
     }
+    
     .error-list {
         color: red;
         margin: 15px 0;
         padding: 0;
         list-style-type: none;
     }
+    
     .error-list li {
         background: #ffe6e6;
         padding: 10px;
@@ -169,35 +224,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         border-left: 4px solid red;
         font-size: 14px;
     }
+    
     .success-message {
-        color: #2a00b3b8;
+        color: #00b383b8;
         background: #e6ffe6;
         padding: 10px;
         margin: 15px 0;
         border-radius: 4px;
-        border-left: 4px solid #0059ffff;;
+        border-left: 4px solid #00ff59ff;
         font-size: 14px;
     }
+    
     h2 {
         text-align: center;
         color: #333;
         margin-bottom: 25px;
         font-size: 24px;
     }
+    
     p {
         text-align: center;
         margin-top: 20px;
         font-size: 14px;
     }
+    
     a {
-        color: #0059ffff;;
+        color: #00ff59ff;
         text-decoration: none;
         font-weight: bold;
     }
+    
     a:hover {
-        color: #2a00b3b8;
+        color: #00b383b8;
         text-decoration: underline;
     }
+    
     label {
         display: block;
         margin-bottom: 15px;
@@ -205,13 +266,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         color: #555;
         font-size: 14px;
     }
+    
     select {
         padding: 10px 8px;
     }
-    body {
+     body {
         background: url('assets/images/fondo.png') center/cover no-repeat;
         background-attachment: fixed;
-    }
+        }
 </style>
 </head>
 <body>
@@ -234,8 +296,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         <form method="POST">
             <label>
-                Usuario:
-                <input type="text" name="username" placeholder="Ingresa tu nombre de usuario" required value="<?php echo isset($_POST['username']) ? htmlspecialchars($_POST['username']) : ''; ?>">
+                RUT:
+                <input type="text" name="rut" placeholder="Ej: 12345678-9" required value="<?php echo isset($_POST['rut']) ? htmlspecialchars($_POST['rut']) : ''; ?>" maxlength="12">
+            </label>
+            
+            <label>
+                Nombre completo:
+                <input type="text" name="nombre" placeholder="Ingresa tu nombre completo" required value="<?php echo isset($_POST['nombre']) ? htmlspecialchars($_POST['nombre']) : ''; ?>">
+            </label>
+            
+            <label>
+                Email:
+                <input type="email" name="email" placeholder="tu@email.com" required value="<?php echo isset($_POST['email']) ? htmlspecialchars($_POST['email']) : ''; ?>">
             </label>
             
             <label>

@@ -7,7 +7,8 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 
-$username = $_SESSION['username'];
+$rut = $_SESSION['rut'];
+$nombre = $_SESSION['nombre'];
 $rol = $_SESSION['rol'];
 ?>
 
@@ -120,7 +121,8 @@ $rol = $_SESSION['rol'];
         
         <div class="user-info">
             <h3><i class="fas fa-user"></i> Información de la sesión</h3>
-            <p><strong>Usuario:</strong> <?php echo htmlspecialchars($username); ?></p>
+            <p><strong>RUT:</strong> <?php echo htmlspecialchars($rut); ?></p>
+            <p><strong>Nombre:</strong> <?php echo htmlspecialchars($nombre); ?></p>
             <p><strong>Rol:</strong> <span class="role-badge"><?php echo htmlspecialchars($rol); ?></span></p>
         </div>
         

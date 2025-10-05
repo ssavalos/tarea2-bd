@@ -24,12 +24,17 @@ if (isset($_SESSION['rol'])) {
 
 // Procesar login si es POST
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $username = trim($_POST['username']);
+    $rut = trim($_POST['rut']);
     $password = $_POST['password'];
 
     // Verificar que el usuario exista
-    $stmt = $conn->prepare("SELECT id, username, pass_hash, rol FROM Auth_User WHERE username = ?");
-    $stmt->bind_param("s", $username);
+    $stmt = $conn->prepare("SELECT au.id, au.rut, au.pass_hash, au.rol, 
+                                   COALESCE(u.user_nombre, i.nombre_ing) as nombre_completo 
+                            FROM Auth_User au 
+                            LEFT JOIN Usuario u ON au.rut = u.user_rut 
+                            LEFT JOIN Ingeniero i ON au.rut = i.ing_rut 
+                            WHERE au.rut = ?");
+    $stmt->bind_param("s", $rut);
     $stmt->execute();
     $result = $stmt->get_result();
 
@@ -41,7 +46,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (password_verify($password, $user['pass_hash'])) {
             // Inicio de sesión exitoso
             $_SESSION['user_id'] = $user['id'];
-            $_SESSION['username'] = $user['username'];
+            $_SESSION['rut'] = $user['rut'];
+            $_SESSION['nombre'] = $user['nombre_completo'];
             $_SESSION['rol'] = $user['rol'];
 
             // Redirigir a la página principal
@@ -214,7 +220,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ?>
         
         <form method="POST">
-            <input type="text" name="username" placeholder="Usuario" required value="<?php echo isset($_POST['username']) ? htmlspecialchars($_POST['username']) : ''; ?>">
+            <input type="text" name="rut" placeholder="RUT (Ej: 12345678-9)" required value="<?php echo isset($_POST['rut']) ? htmlspecialchars($_POST['rut']) : ''; ?>" maxlength="12">
             
             <div class="password-container">
                 <input type="password" name="password" id="password" placeholder="Contraseña" required>
