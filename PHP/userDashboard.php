@@ -12,60 +12,7 @@ if ($_SESSION['rol'] !== 'usuario') {
 $rut = $_SESSION['rut'];
 $nombre = $_SESSION['nombre'];
 
-// Obtener estadísticas del usuario
-$stmt = $conn->prepare("
-    SELECT 
-        COUNT(f.id_funcionalidad) as total_funcionalidades,
-        COUNT(CASE WHEN f.estado_funcion = 'Abierto' THEN 1 END) as funcionalidades_abiertas,
-        COUNT(CASE WHEN f.estado_funcion = 'En Progreso' THEN 1 END) as funcionalidades_progreso,
-        COUNT(CASE WHEN f.estado_funcion = 'Resuelto' THEN 1 END) as funcionalidades_resueltas,
-        COUNT(CASE WHEN f.estado_funcion = 'Cerrado' THEN 1 END) as funcionalidades_cerradas
-    FROM Funcionalidad f 
-    WHERE f.user_rut = ?
-");
-$stmt->bind_param("s", $rut);
-$stmt->execute();
-$stats_func = $stmt->get_result()->fetch_assoc();
 
-$stmt = $conn->prepare("
-    SELECT 
-        COUNT(e.id_bug) as total_errores,
-        COUNT(CASE WHEN e.estado_error = 'Abierto' THEN 1 END) as errores_abiertos,
-        COUNT(CASE WHEN e.estado_error = 'En Progreso' THEN 1 END) as errores_progreso,
-        COUNT(CASE WHEN e.estado_error = 'Resuelto' THEN 1 END) as errores_resueltos,
-        COUNT(CASE WHEN e.estado_error = 'Cerrado' THEN 1 END) as errores_cerrados
-    FROM ErrorBug e 
-    WHERE e.user_rut = ?
-");
-$stmt->bind_param("s", $rut);
-$stmt->execute();
-$stats_error = $stmt->get_result()->fetch_assoc();
-
-// Obtener funcionalidades recientes
-$stmt = $conn->prepare("
-    SELECT f.id_funcionalidad, f.titulo_funcion, f.estado_funcion, f.fecha_funcion, t.nombre_topico
-    FROM Funcionalidad f
-    JOIN Topico t ON f.id_topico = t.id_topico
-    WHERE f.user_rut = ?
-    ORDER BY f.fecha_funcion DESC
-    LIMIT 5
-");
-$stmt->bind_param("s", $rut);
-$stmt->execute();
-$funcionalidades_recientes = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
-
-// Obtener errores recientes
-$stmt = $conn->prepare("
-    SELECT e.id_bug, e.titulo_error, e.estado_error, e.fecha_error, t.nombre_topico
-    FROM ErrorBug e
-    JOIN Topico t ON e.id_topico = t.id_topico
-    WHERE e.user_rut = ?
-    ORDER BY e.fecha_error DESC
-    LIMIT 5
-");
-$stmt->bind_param("s", $rut);
-$stmt->execute();
-$errores_recientes = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 $page_title = "ZeroPressure";
 ?>
 
