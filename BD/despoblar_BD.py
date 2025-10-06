@@ -37,21 +37,30 @@ def main():
         # Guardar y eliminar triggers que podrían interferir
         print("  🔧 Deshabilitando triggers temporalmente...")
         cur.execute("DROP TRIGGER IF EXISTS trg_min_3_criterios")
-        cur.execute("DROP TRIGGER IF EXISTS trg_max_2_especialidades") 
+        cur.execute("DROP TRIGGER IF EXISTS trg_max_2_especialidades")
         cur.execute("DROP TRIGGER IF EXISTS trg_bloqueo_update_func")
         cur.execute("DROP TRIGGER IF EXISTS trg_bloqueo_delete_func")
-        
+
         # Eliminar datos en orden inverso de dependencias
         # Primero las tablas con dependencias (hijas), luego las padres
-        
+
         print("  📋 Eliminando asignaciones...")
         cur.execute("DELETE FROM Asignacion_Funcionalidad")
         affected = cur.rowcount
         print(f"    ✓ Asignacion_Funcionalidad: {affected} registros eliminados")
-        
+
         cur.execute("DELETE FROM Asignacion_Error")
         affected = cur.rowcount
         print(f"    ✓ Asignacion_Error: {affected} registros eliminados")
+
+        print("  💬 Eliminando reseñas...")
+        cur.execute("DELETE FROM Resena_Funcionalidad")
+        affected = cur.rowcount
+        print(f"    ✓ Resena_Funcionalidad: {affected} registros eliminados")
+
+        cur.execute("DELETE FROM Resena_Error")
+        affected = cur.rowcount
+        print(f"    ✓ Resena_Error: {affected} registros eliminados")
         
         print("  📝 Eliminando criterios de aceptación...")
         cur.execute("DELETE FROM Criterio_Aceptacion")
@@ -96,7 +105,8 @@ def main():
         # Reiniciar auto_increment en las tablas que lo usan
         print("  🔄 Reiniciando contadores auto_increment...")
         auto_increment_tables = [
-            "Topico", "Funcionalidad", "Criterio_Aceptacion", "ErrorBug"
+            "Topico", "Funcionalidad", "Criterio_Aceptacion", "Resena_Funcionalidad",
+            "ErrorBug", "Resena_Error"
         ]
         
         for table in auto_increment_tables:
@@ -107,11 +117,11 @@ def main():
         print("  🔄 Recreando triggers...")
         cur.execute("""
         CREATE TRIGGER trg_min_3_criterios
-        AFTER INSERT ON Criterio_Aceptacion
+        AFTER DELETE ON Criterio_Aceptacion
         FOR EACH ROW
         BEGIN
           DECLARE n INT;
-          SELECT COUNT(*) INTO n FROM Criterio_Aceptacion WHERE id_funcionalidad = NEW.id_funcionalidad;
+          SELECT COUNT(*) INTO n FROM Criterio_Aceptacion WHERE id_funcionalidad = OLD.id_funcionalidad;
           IF n < 3 THEN
             SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Cada funcionalidad debe tener al menos 3 criterios.';
           END IF;
@@ -182,8 +192,9 @@ def verificar_vaciado():
     print("\n🔍 Verificación post-despoblamiento:")
     
     tables = [
-        'Auth_User', 'Usuario', 'Ingeniero', 'Topico', 
-        'Funcionalidad', 'Criterio_Aceptacion', 'ErrorBug',
+        'Auth_User', 'Usuario', 'Ingeniero', 'Topico',
+        'Funcionalidad', 'Criterio_Aceptacion', 'Resena_Funcionalidad',
+        'ErrorBug', 'Resena_Error',
         'Ingeniero_Especialidad', 'Asignacion_Funcionalidad', 'Asignacion_Error'
     ]
     
