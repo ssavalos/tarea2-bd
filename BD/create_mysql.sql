@@ -8,6 +8,8 @@ USE tarea2;
 SET FOREIGN_KEY_CHECKS = 0;
 
 -- ====== Drop en orden de dependencias ======
+DROP TABLE IF EXISTS Resena_Error;
+DROP TABLE IF EXISTS Resena_Funcionalidad;
 DROP TABLE IF EXISTS Asignacion_Error;
 DROP TABLE IF EXISTS Asignacion_Funcionalidad;
 DROP TABLE IF EXISTS Criterio_Aceptacion;
@@ -74,6 +76,19 @@ CREATE TABLE Criterio_Aceptacion (
     ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB;
 
+CREATE TABLE Resena_Funcionalidad (
+  id_resena INT PRIMARY KEY AUTO_INCREMENT,
+  id_funcionalidad INT NOT NULL,
+  ing_rut VARCHAR(12) NOT NULL,
+  comentario TEXT NOT NULL,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT fk_rf_func FOREIGN KEY (id_funcionalidad) REFERENCES Funcionalidad(id_funcionalidad)
+    ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT fk_rf_ing FOREIGN KEY (ing_rut) REFERENCES Ingeniero(ing_rut)
+    ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB;
+
 CREATE TABLE ErrorBug (
   id_bug        INT PRIMARY KEY AUTO_INCREMENT,
   titulo_error  VARCHAR(100) NOT NULL,
@@ -87,6 +102,19 @@ CREATE TABLE ErrorBug (
   CONSTRAINT fk_bug_usuario FOREIGN KEY (user_rut)  REFERENCES Usuario(user_rut)
     ON DELETE RESTRICT ON UPDATE CASCADE,
   CONSTRAINT uq_titulo_error UNIQUE (titulo_error)
+) ENGINE=InnoDB;
+
+CREATE TABLE Resena_Error (
+  id_resena INT PRIMARY KEY AUTO_INCREMENT,
+  id_bug INT NOT NULL,
+  ing_rut VARCHAR(12) NOT NULL,
+  comentario TEXT NOT NULL,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT fk_re_error FOREIGN KEY (id_bug) REFERENCES ErrorBug(id_bug)
+    ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT fk_re_ing FOREIGN KEY (ing_rut) REFERENCES Ingeniero(ing_rut)
+    ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB;
 
 CREATE TABLE Asignacion_Funcionalidad (

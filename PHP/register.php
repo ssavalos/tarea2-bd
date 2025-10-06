@@ -6,6 +6,18 @@ include 'db.php';
 $errors = array();
 $success = "";
 
+$topics = [];
+if ($resultTopics = $conn->query('SELECT id_topico, nombre_topico FROM Topico ORDER BY nombre_topico')) {
+    while ($row = $resultTopics->fetch_assoc()) {
+        $topics[] = $row;
+    }
+    $resultTopics->free();
+}
+
+$especialidades_seleccionadas = isset($_POST['especialidades']) && is_array($_POST['especialidades'])
+    ? array_map('strval', $_POST['especialidades'])
+    : [];
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $rut = isset($_POST['rut']) ? trim($_POST['rut']) : '';
     $nombre = isset($_POST['nombre']) ? trim($_POST['nombre']) : '';
@@ -13,6 +25,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $password = isset($_POST['password']) ? $_POST['password'] : '';
     $password_confirm = isset($_POST['password_confirm']) ? $_POST['password_confirm'] : '';
     $rol = isset($_POST['rol']) ? $_POST['rol'] : '';
+    $especialidades = isset($_POST['especialidades']) && is_array($_POST['especialidades'])
+        ? array_unique(array_map('intval', $_POST['especialidades']))
+        : [];
+    $especialidades_seleccionadas = array_map('strval', $especialidades);
 
     // Validaciones básicas
     // Validar formato de RUT
@@ -42,6 +58,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($password !== $password_confirm) {
         $errors[] = "Las contraseñas no coinciden.";
+    }
+
+    if ($rol === 'ingeniero') {
+        if (empty($topics)) {
+            $errors[] = 'No hay tópicos configurados para asignar especialidades. Contacta al administrador.';
+        }
+        if (count($especialidades) < 1 || count($especialidades) > 2) {
+            $errors[] = 'Debes seleccionar entre 1 y 2 especialidades.';
+        } else {
+            $valid_ids = array_map('intval', array_column($topics, 'id_topico'));
+            foreach ($especialidades as $esp) {
+                if (!in_array($esp, $valid_ids, true)) {
+                    $errors[] = 'Una de las especialidades seleccionadas no es válida.';
+                    break;
+                }
+            }
+        }
     }
 
     // Revisar si el RUT ya existe en Auth_User
@@ -75,6 +108,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 throw new Exception("Error al crear el perfil: " . $stmt->error);
             }
             $stmt->close();
+
+            if ($rol === 'ingeniero') {
+                $stmtEsp = $conn->prepare('INSERT INTO Ingeniero_Especialidad (id_topico, ing_rut) VALUES (?, ?)');
+                foreach ($especialidades as $esp) {
+                    $stmtEsp->bind_param('is', $esp, $rut);
+                    if (!$stmtEsp->execute()) {
+                        throw new Exception('Error al registrar especialidades: ' . $stmtEsp->error);
+                    }
+                }
+                $stmtEsp->close();
+            }
 
             // 2. Insertar en Auth_User
             $stmt = $conn->prepare("INSERT INTO Auth_User (rut, pass_hash, rol) VALUES (?, ?, ?)");
@@ -129,6 +173,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         font-weight: bold;
         color: #555;
         font-size: 14px;
+    }
+
+    .label-helper {
+        font-weight: bold;
+        color: #555;
+        margin: 10px 0 8px;
+    }
+
+    .especialidades-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 10px;
+        margin-bottom: 15px;
+    }
+
+    .checkbox-inline {
+        font-weight: normal;
+        color: #444;
+    }
+
+    .empty-specialty {
+        font-size: 13px;
+        color: var(--text-secondary);
+        font-style: italic;
     }
 </style>
 </head>
@@ -190,11 +258,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             <label>
                 Tipo de cuenta:
-                <select name="rol">
+                <select name="rol" id="rol-select">
                     <option value="usuario" <?php echo (isset($_POST['rol']) && $_POST['rol'] === 'usuario') ? 'selected' : ''; ?>>Usuario</option>
                     <option value="ingeniero" <?php echo (isset($_POST['rol']) && $_POST['rol'] === 'ingeniero') ? 'selected' : ''; ?>>Ingeniero</option>
                 </select>
             </label>
+
+            <div id="especialidades-section" class="especialidades-section" style="display: none;">
+                <p class="label-helper">Selecciona entre 1 y 2 especialidades:</p>
+                <div class="especialidades-grid">
+                    <?php foreach ($topics as $topic): ?>
+                        <label class="checkbox-inline">
+                            <input type="checkbox" name="especialidades[]" value="<?php echo $topic['id_topico']; ?>" <?php echo in_array((string)$topic['id_topico'], $especialidades_seleccionadas, true) ? 'checked' : ''; ?>>
+                            <?php echo htmlspecialchars($topic['nombre_topico']); ?>
+                        </label>
+                    <?php endforeach; ?>
+                </div>
+                <?php if (empty($topics)): ?>
+                    <p class="empty-specialty">No hay tópicos disponibles actualmente. Consulta con el administrador.</p>
+                <?php endif; ?>
+            </div>
             
             <button type="submit">Crear cuenta</button>
         </form>
@@ -231,6 +314,30 @@ document.addEventListener('DOMContentLoaded', function() {
         field.addEventListener('keydown', preventSpaces);
         field.addEventListener('keypress', preventSpaces);
     });
+
+    const successMessage = document.querySelector('.success-message');
+    if (successMessage) {
+        setTimeout(function() {
+            successMessage.style.transition = 'opacity 0.5s ease-out';
+            successMessage.style.opacity = '0';
+            setTimeout(function() {
+                successMessage.style.display = 'none';
+            }, 500);
+        }, 4000);
+    }
+
+    const rolSelect = document.getElementById('rol-select');
+    const especialidadesSection = document.getElementById('especialidades-section');
+
+    function toggleEspecialidades() {
+        if (!rolSelect) return;
+        especialidadesSection.style.display = rolSelect.value === 'ingeniero' ? 'block' : 'none';
+    }
+
+    if (rolSelect) {
+        rolSelect.addEventListener('change', toggleEspecialidades);
+        toggleEspecialidades();
+    }
 });
 </script>
 </body>

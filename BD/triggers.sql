@@ -1,11 +1,11 @@
 DELIMITER $$
 
 CREATE TRIGGER trg_min_3_criterios
-AFTER INSERT ON Criterio_Aceptacion
+AFTER DELETE ON Criterio_Aceptacion
 FOR EACH ROW
 BEGIN
   DECLARE n INT;
-  SELECT COUNT(*) INTO n FROM Criterio_Aceptacion WHERE id_funcionalidad = NEW.id_funcionalidad;
+  SELECT COUNT(*) INTO n FROM Criterio_Aceptacion WHERE id_funcionalidad = OLD.id_funcionalidad;
   IF n < 3 THEN
     SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Cada funcionalidad debe tener al menos 3 criterios.';
   END IF;

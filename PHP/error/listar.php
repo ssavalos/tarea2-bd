@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 session_start();
 require_once '../includes/auth_guard.php';
 require_once '../db.php';
@@ -86,6 +86,11 @@ function buildErrorQuery(mysqli $conn, array $options): array {
     return $rows;
 }
 
+$flash = $_SESSION['flash_error'] ?? null;
+if (isset($_SESSION['flash_error'])) {
+    unset($_SESSION['flash_error']);
+}
+
 $comunes = [
     'buscar' => $search,
     'estado' => in_array($estado, $estados_validos, true) ? $estado : '',
@@ -108,8 +113,21 @@ include '../includes/header.php';
 ?>
 
 <div class="main-container">
+    <?php if ($flash): ?>
+        <div class="glass-card flash-<?php echo htmlspecialchars($flash['type']); ?>">
+            <?php echo htmlspecialchars($flash['message']); ?>
+        </div>
+    <?php endif; ?>
+
     <div class="glass-card">
         <h2><i class="fas fa-bug"></i> Errores</h2>
+        <?php if ($rol === 'usuario'): ?>
+            <div class="actions-bar">
+                <a href="crear.php" class="action-btn">
+                    <i class="fas fa-plus"></i> Reportar error
+                </a>
+            </div>
+        <?php endif; ?>
         <form method="get" class="filters-form">
             <div class="filters-grid">
                 <div>
@@ -158,6 +176,7 @@ include '../includes/header.php';
                                 <th>Estado</th>
                                 <th>Fecha</th>
                                 <th>Ingenieros asignados</th>
+                                <th>Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -173,6 +192,14 @@ include '../includes/header.php';
                                     <td><span class="badge estado-<?php echo strtolower(str_replace(' ', '', $row['estado_error'])); ?>"><?php echo htmlspecialchars($row['estado_error']); ?></span></td>
                                     <td><?php echo htmlspecialchars($row['fecha_error']); ?></td>
                                     <td><?php echo $row['ingenieros'] ? htmlspecialchars($row['ingenieros']) : 'Sin asignar'; ?></td>
+                                    <td class="actions-cell">
+                                        <?php if ($row['estado_error'] === 'Abierto'): ?>
+                                            <a href="editar.php?id=<?php echo $row['id_bug']; ?>" class="action-link"><i class="fas fa-edit"></i> Editar</a>
+                                            <a href="eliminar.php?id=<?php echo $row['id_bug']; ?>" class="action-link danger"><i class="fas fa-trash"></i> Eliminar</a>
+                                        <?php else: ?>
+                                            <span class="action-disabled" title="Disponible solo para errores abiertos">Bloqueado</span>
+                                        <?php endif; ?>
+                                    </td>
                                 </tr>
                             <?php endforeach; ?>
                         </tbody>
@@ -198,6 +225,8 @@ include '../includes/header.php';
                                 <th>Estado</th>
                                 <th>Fecha</th>
                                 <th>Reportado por</th>
+                                <th>Reseñas</th>
+                                <th>Detalles</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -213,6 +242,13 @@ include '../includes/header.php';
                                     <td><span class="badge estado-<?php echo strtolower(str_replace(' ', '', $row['estado_error'])); ?>"><?php echo htmlspecialchars($row['estado_error']); ?></span></td>
                                     <td><?php echo htmlspecialchars($row['fecha_error']); ?></td>
                                     <td><?php echo htmlspecialchars($row['user_nombre']); ?> (<?php echo htmlspecialchars($row['user_rut']); ?>)</td>
+                                    <td><a href="reviews.php?id=<?php echo $row['id_bug']; ?>" class="review-link"><i class="fas fa-comments"></i> Ver reseñas</a></td>
+                                    <td class="details-cell">
+                                        <span class="info-icon" aria-label="Mostrar detalles"><i class="fas fa-circle-info"></i></span>
+                                        <div class="info-popover">
+                                            <p><strong>Descripción:</strong><br><?php echo nl2br(htmlspecialchars($row['descripcion_error'])); ?></p>
+                                        </div>
+                                    </td>
                                 </tr>
                             <?php endforeach; ?>
                         </tbody>
@@ -237,6 +273,8 @@ include '../includes/header.php';
                                 <th>Fecha</th>
                                 <th>Reportado por</th>
                                 <th>Ingenieros asignados</th>
+                                <th>Reseñas</th>
+                                <th>Detalles</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -253,6 +291,13 @@ include '../includes/header.php';
                                     <td><?php echo htmlspecialchars($row['fecha_error']); ?></td>
                                     <td><?php echo htmlspecialchars($row['user_nombre']); ?> (<?php echo htmlspecialchars($row['user_rut']); ?>)</td>
                                     <td><?php echo $row['ingenieros'] ? htmlspecialchars($row['ingenieros']) : 'Sin asignar'; ?></td>
+                                    <td><a href="reviews.php?id=<?php echo $row['id_bug']; ?>" class="review-link"><i class="fas fa-comments"></i> Ver reseñas</a></td>
+                                    <td class="details-cell">
+                                        <span class="info-icon" aria-label="Mostrar detalles"><i class="fas fa-circle-info"></i></span>
+                                        <div class="info-popover">
+                                            <p><strong>Descripción:</strong><br><?php echo nl2br(htmlspecialchars($row['descripcion_error'])); ?></p>
+                                        </div>
+                                    </td>
                                 </tr>
                             <?php endforeach; ?>
                         </tbody>
@@ -309,7 +354,9 @@ include '../includes/header.php';
 }
 
 .table-wrapper {
+    position: relative;
     overflow-x: auto;
+    overflow-y: visible;
 }
 
 .styled-table {
@@ -326,6 +373,59 @@ include '../includes/header.php';
     padding: 10px;
     text-align: left;
     border-bottom: 1px solid rgba(0,0,0,0.1);
+}
+
+.actions-bar {
+    margin-bottom: 15px;
+}
+
+.actions-cell {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.action-link {
+    font-size: 13px;
+    font-weight: bold;
+    color: var(--primary-blue);
+    text-decoration: none;
+}
+
+.action-link:hover {
+    text-decoration: underline;
+}
+
+.action-link.danger {
+    color: #c0392b;
+}
+
+.action-disabled {
+    font-size: 13px;
+    color: var(--text-secondary);
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.review-link {
+    font-size: 13px;
+    font-weight: bold;
+    color: var(--primary-blue);
+    text-decoration: none;
+}
+
+.review-link:hover {
+    text-decoration: underline;
+}
+
+.flash-success {
+    border-left: 4px solid #2ecc71;
+    color: #155724;
+}
+
+.flash-error {
+    border-left: 4px solid #c0392b;
+    color: #721c24;
 }
 
 .title-cell {
@@ -350,6 +450,56 @@ include '../includes/header.php';
     text-align: center;
     color: var(--text-secondary);
     font-style: italic;
+}
+
+.details-cell {
+    position: relative;
+    text-align: center;
+    z-index: 1;
+}
+
+.info-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: rgba(0, 89, 255, 0.1);
+    color: var(--primary-blue);
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.info-icon:hover {
+    background: rgba(0, 89, 255, 0.25);
+}
+
+.info-popover {
+    display: none;
+    position: absolute;
+    top: 50%;
+    right: calc(100% + 14px);
+    transform: translateY(-50%);
+    z-index: 999;
+    width: 260px;
+    background: rgba(255, 255, 255, 0.98);
+    border: 1px solid rgba(0,0,0,0.12);
+    border-radius: 10px;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+    padding: 12px;
+    text-align: left;
+    pointer-events: none;
+}
+
+.details-cell:hover .info-popover {
+    display: block;
+}
+
+.info-popover p {
+    margin: 6px 0;
+    font-size: 13px;
+    color: var(--text-secondary);
 }
 </style>
 

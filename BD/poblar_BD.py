@@ -94,10 +94,12 @@ def main():
 
         # Especialidades
         ing_especial = []
+        topic_to_ing = defaultdict(list)
         for ing in ing_ruts:
             k = random.randint(1, min(2, NUM_TOPICS))
             for t in random.sample(range(1, NUM_TOPICS + 1), k):
                 ing_especial.append((t, ing))
+                topic_to_ing[t].append(ing)
         if ing_especial:
             cur.executemany(
                 "INSERT IGNORE INTO Ingeniero_Especialidad (id_topico, ing_rut) VALUES (%s, %s)",
@@ -132,6 +134,23 @@ def main():
             "VALUES (%s,%s,%s,%s,%s,%s,%s,%s)",
             funcs
         )
+
+        func_assignments = []
+        func_load = Counter()
+        for fid, _, _, _, _, _, topico_id, _ in funcs:
+            candidatos = topic_to_ing.get(topico_id, [])
+            if not candidatos:
+                continue
+            candidatos = sorted(candidatos, key=lambda ing: (func_load[ing], ing))
+            for ing in candidatos[:3]:
+                func_assignments.append((fid, ing))
+                func_load[ing] += 1
+
+        if func_assignments:
+            cur.executemany(
+                "INSERT IGNORE INTO Asignacion_Funcionalidad (id_funcionalidad, ing_rut) VALUES (%s, %s)",
+                func_assignments
+            )
 
         # Criterios
         criterios = []
@@ -171,14 +190,31 @@ def main():
             bugs
         )
 
+        error_assignments = []
+        error_load = Counter()
+        for bid, _, _, _, _, topico_id, _ in bugs:
+            candidatos = topic_to_ing.get(topico_id, [])
+            if not candidatos:
+                continue
+            candidatos = sorted(candidatos, key=lambda ing: (error_load[ing], ing))
+            for ing in candidatos[:3]:
+                error_assignments.append((bid, ing))
+                error_load[ing] += 1
+
+        if error_assignments:
+            cur.executemany(
+                "INSERT IGNORE INTO Asignacion_Error (id_bug, ing_rut) VALUES (%s, %s)",
+                error_assignments
+            )
+
         # Recrear triggers
         cur.execute("""
         CREATE TRIGGER trg_min_3_criterios
-        AFTER INSERT ON Criterio_Aceptacion
+        AFTER DELETE ON Criterio_Aceptacion
         FOR EACH ROW
         BEGIN
           DECLARE n INT;
-          SELECT COUNT(*) INTO n FROM Criterio_Aceptacion WHERE id_funcionalidad = NEW.id_funcionalidad;
+          SELECT COUNT(*) INTO n FROM Criterio_Aceptacion WHERE id_funcionalidad = OLD.id_funcionalidad;
           IF n < 3 THEN
             SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Cada funcionalidad debe tener al menos 3 criterios.';
           END IF;
