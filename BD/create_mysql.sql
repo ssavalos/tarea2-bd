@@ -77,6 +77,7 @@ CREATE TABLE Criterio_Aceptacion (
     ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB;
 
+-- añadi esta tabla
 CREATE TABLE Resena_Funcionalidad (
   id_resena INT PRIMARY KEY AUTO_INCREMENT,
   id_funcionalidad INT NOT NULL,
@@ -106,6 +107,7 @@ CREATE TABLE ErrorBug (
   CONSTRAINT uq_titulo_error UNIQUE (titulo_error)
 ) ENGINE=InnoDB;
 
+ -- añadi esta tabla
 CREATE TABLE Resena_Error (
   id_resena INT PRIMARY KEY AUTO_INCREMENT,
   id_bug INT NOT NULL,
