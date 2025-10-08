@@ -26,6 +26,78 @@ if ($result = $conn->query('SELECT id_topico, nombre_topico FROM Topico ORDER BY
     $result->free();
 }
 
+function autocerrarFuncionalidades(mysqli $conn): void
+{
+    $conn->query(
+        "UPDATE Funcionalidad
+         SET estado_funcion = 'Cerrado'
+         WHERE estado_funcion = 'Resuelto'
+           AND resuelto_en IS NOT NULL
+           AND resuelto_en <= DATE_SUB(NOW(), INTERVAL 3 DAY)"
+    );
+}
+
+autocerrarFuncionalidades($conn);
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'update_estado' && $rol === 'ingeniero') {
+    $func_id = isset($_POST['id']) ? (int)$_POST['id'] : 0;
+    $nuevo_estado = $_POST['estado'] ?? '';
+
+    if ($func_id > 0 && in_array($nuevo_estado, ['En Progreso', 'Resuelto'], true)) {
+        $stmt = $conn->prepare('SELECT estado_funcion, id_topico FROM Funcionalidad WHERE id_funcionalidad = ?');
+        $stmt->bind_param('i', $func_id);
+        $stmt->execute();
+        $func_data = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+
+        if ($func_data) {
+            $estado_actual = $func_data['estado_funcion'];
+
+            $stmt = $conn->prepare('SELECT 1 FROM Asignacion_Funcionalidad WHERE id_funcionalidad = ? AND ing_rut = ?');
+            $stmt->bind_param('is', $func_id, $rut);
+            $stmt->execute();
+            $asignado = $stmt->get_result()->num_rows > 0;
+            $stmt->close();
+
+            if ($asignado) {
+                $transicion_valida = (
+                    ($estado_actual === 'Abierto' && $nuevo_estado === 'En Progreso') ||
+                    ($estado_actual === 'En Progreso' && $nuevo_estado === 'Resuelto')
+                );
+
+                if ($transicion_valida) {
+                    if ($nuevo_estado === 'Resuelto') {
+                        $stmt = $conn->prepare('UPDATE Funcionalidad SET estado_funcion = ?, resuelto_en = NOW() WHERE id_funcionalidad = ?');
+                    } else {
+                        $stmt = $conn->prepare('UPDATE Funcionalidad SET estado_funcion = ?, resuelto_en = NULL WHERE id_funcionalidad = ?');
+                    }
+                    $stmt->bind_param('si', $nuevo_estado, $func_id);
+                    $stmt->execute();
+                    $stmt->close();
+
+                    $_SESSION['flash_func'] = [
+                        'type' => 'success',
+                        'message' => "Estado actualizado a {$nuevo_estado}."
+                    ];
+                } else {
+                    $_SESSION['flash_func'] = [
+                        'type' => 'error',
+                        'message' => 'Transición de estado no permitida.'
+                    ];
+                }
+            } else {
+                $_SESSION['flash_func'] = [
+                    'type' => 'error',
+                    'message' => 'No puedes actualizar funcionalidades que no están asignadas a ti.'
+                ];
+            }
+        }
+    }
+
+    header('Location: listar.php');
+    exit;
+}
+
 function buildFuncionalidadQuery(mysqli $conn, array $options): array {
     $base = "SELECT f.id_funcionalidad, f.titulo_funcion, f.ambiente_funcion, f.resumen_funcion, f.estado_funcion, f.fecha_funcion,\n                     t.nombre_topico, u.user_nombre, u.user_rut,\n                     GROUP_CONCAT(DISTINCT i.nombre_ing ORDER BY i.nombre_ing SEPARATOR ', ') AS ingenieros,\n                     (SELECT GROUP_CONCAT(descripcion_criterio ORDER BY id_criterio SEPARATOR '\n')\n                        FROM Criterio_Aceptacion ca\n                        WHERE ca.id_funcionalidad = f.id_funcionalidad) AS criterios\n              FROM Funcionalidad f\n              INNER JOIN Topico t ON f.id_topico = t.id_topico\n              INNER JOIN Usuario u ON f.user_rut = u.user_rut\n              LEFT JOIN Asignacion_Funcionalidad af ON f.id_funcionalidad = af.id_funcionalidad\n              LEFT JOIN Ingeniero i ON af.ing_rut = i.ing_rut";
 
@@ -247,6 +319,7 @@ include '../includes/header.php';
                                 <th>Solicitante</th>
                                 <th>Reseñas</th>
                                 <th>Detalles</th>
+                                <th>Gestionar</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -280,6 +353,31 @@ include '../includes/header.php';
                                                 </ul>
                                             <?php endif; ?>
                                         </div>
+                                    </td>
+                                    <td>
+                                        <?php if ($row['estado_funcion'] === 'Abierto'): ?>
+                                            <form method="post" class="status-form">
+                                                <input type="hidden" name="action" value="update_estado">
+                                                <input type="hidden" name="id" value="<?php echo $row['id_funcionalidad']; ?>">
+                                                <input type="hidden" name="estado" value="En Progreso">
+                                                <button type="submit" class="status-btn">
+                                                    <i class="fas fa-play"></i> Marcar en progreso
+                                                </button>
+                                            </form>
+                                        <?php elseif ($row['estado_funcion'] === 'En Progreso'): ?>
+                                            <form method="post" class="status-form">
+                                                <input type="hidden" name="action" value="update_estado">
+                                                <input type="hidden" name="id" value="<?php echo $row['id_funcionalidad']; ?>">
+                                                <input type="hidden" name="estado" value="Resuelto">
+                                                <button type="submit" class="status-btn secondary">
+                                                    <i class="fas fa-check"></i> Marcar resuelto
+                                                </button>
+                                            </form>
+                                        <?php elseif ($row['estado_funcion'] === 'Resuelto'): ?>
+                                            <span class="status-note">En espera de cierre automático</span>
+                                        <?php else: ?>
+                                            <span class="status-note">Sin acciones</span>
+                                        <?php endif; ?>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
@@ -468,6 +566,37 @@ include '../includes/header.php';
 
 .review-link:hover {
     text-decoration: underline;
+}
+
+.status-form {
+    display: inline-block;
+}
+
+.status-btn {
+    background: var(--primary-blue);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: bold;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.status-btn.secondary {
+    background: #28a745;
+}
+
+.status-btn:hover {
+    filter: brightness(1.05);
+}
+
+.status-note {
+    font-size: 12px;
+    color: var(--text-secondary);
 }
 
 .flash-success {

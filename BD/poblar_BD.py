@@ -122,22 +122,27 @@ def main():
             if len(titulo) < 20:
                 titulo += " " + faker.word()
             titulo = titulo[:100]
-            ambiente = random.choice(["Web", "M??vil"])
+            ambiente = random.choice(["Web", "Móvil"])
             resumen = faker.sentence(nb_words=10)
             estado = random.choice(estados_func)
             id_topico = random.randint(1, NUM_TOPICS)
-            funcs.append((fid, titulo, ambiente, resumen, estado, fecha, id_topico, user_rut))
+            resuelto_en = None
+            if estado == "Resuelto":
+                resuelto_en = datetime.datetime.combine(fecha, datetime.time()) + datetime.timedelta(days=random.randint(0, 2))
+            elif estado == "Cerrado":
+                resuelto_en = datetime.datetime.combine(fecha, datetime.time()) + datetime.timedelta(days=random.randint(3, 10))
+            funcs.append((fid, titulo, ambiente, resumen, estado, fecha, resuelto_en, id_topico, user_rut))
 
         cur.executemany(
             "INSERT IGNORE INTO Funcionalidad "
-            "(id_funcionalidad, titulo_funcion, ambiente_funcion, resumen_funcion, estado_funcion, fecha_funcion, id_topico, user_rut) "
-            "VALUES (%s,%s,%s,%s,%s,%s,%s,%s)",
+            "(id_funcionalidad, titulo_funcion, ambiente_funcion, resumen_funcion, estado_funcion, fecha_funcion, resuelto_en, id_topico, user_rut) "
+            "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)",
             funcs
         )
 
         func_assignments = []
         func_load = Counter()
-        for fid, _, _, _, _, _, topico_id, _ in funcs:
+        for fid, _, _, _, _, _, _, topico_id, _ in funcs:
             candidatos = topic_to_ing.get(topico_id, [])
             if not candidatos:
                 continue
@@ -181,18 +186,23 @@ def main():
             descripcion = faker.paragraph(nb_sentences=2)
             estado = random.choice(estados_bug)
             id_topico = random.randint(1, NUM_TOPICS)
-            bugs.append((bid, titulo, descripcion, fecha, estado, id_topico, user_rut))
+            resuelto_en = None
+            if estado == "Resuelto":
+                resuelto_en = datetime.datetime.combine(fecha, datetime.time()) + datetime.timedelta(days=random.randint(0, 2))
+            elif estado == "Cerrado":
+                resuelto_en = datetime.datetime.combine(fecha, datetime.time()) + datetime.timedelta(days=random.randint(3, 10))
+            bugs.append((bid, titulo, descripcion, fecha, estado, resuelto_en, id_topico, user_rut))
 
         cur.executemany(
             "INSERT IGNORE INTO ErrorBug "
-            "(id_bug, titulo_error, descripcion_error, fecha_error, estado_error, id_topico, user_rut) "
-            "VALUES (%s,%s,%s,%s,%s,%s,%s)",
+            "(id_bug, titulo_error, descripcion_error, fecha_error, estado_error, resuelto_en, id_topico, user_rut) "
+            "VALUES (%s,%s,%s,%s,%s,%s,%s,%s)",
             bugs
         )
 
         error_assignments = []
         error_load = Counter()
-        for bid, _, _, _, _, topico_id, _ in bugs:
+        for bid, _, _, _, _, _, topico_id, _ in bugs:
             candidatos = topic_to_ing.get(topico_id, [])
             if not candidatos:
                 continue

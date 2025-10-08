@@ -24,6 +24,77 @@ if ($result = $conn->query('SELECT id_topico, nombre_topico FROM Topico ORDER BY
     $result->free();
 }
 
+function autocerrarErrores(mysqli $conn): void
+{
+    $conn->query(
+        "UPDATE ErrorBug
+         SET estado_error = 'Cerrado'
+         WHERE estado_error = 'Resuelto'
+           AND resuelto_en IS NOT NULL
+           AND resuelto_en <= DATE_SUB(NOW(), INTERVAL 3 DAY)"
+    );
+}
+
+autocerrarErrores($conn);
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'update_estado' && $rol === 'ingeniero') {
+    $bug_id = isset($_POST['id']) ? (int)$_POST['id'] : 0;
+    $nuevo_estado = $_POST['estado'] ?? '';
+
+    if ($bug_id > 0 && in_array($nuevo_estado, ['En Progreso', 'Resuelto'], true)) {
+        $stmt = $conn->prepare('SELECT estado_error FROM ErrorBug WHERE id_bug = ?');
+        $stmt->bind_param('i', $bug_id);
+        $stmt->execute();
+        $bug_data = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+
+        if ($bug_data) {
+            $estado_actual = $bug_data['estado_error'];
+            $stmt = $conn->prepare('SELECT 1 FROM Asignacion_Error WHERE id_bug = ? AND ing_rut = ?');
+            $stmt->bind_param('is', $bug_id, $rut);
+            $stmt->execute();
+            $asignado = $stmt->get_result()->num_rows > 0;
+            $stmt->close();
+
+            if ($asignado) {
+                $transicion_valida = (
+                    ($estado_actual === 'Abierto' && $nuevo_estado === 'En Progreso') ||
+                    ($estado_actual === 'En Progreso' && $nuevo_estado === 'Resuelto')
+                );
+
+                if ($transicion_valida) {
+                    if ($nuevo_estado === 'Resuelto') {
+                        $stmt = $conn->prepare('UPDATE ErrorBug SET estado_error = ?, resuelto_en = NOW() WHERE id_bug = ?');
+                    } else {
+                        $stmt = $conn->prepare('UPDATE ErrorBug SET estado_error = ?, resuelto_en = NULL WHERE id_bug = ?');
+                    }
+                    $stmt->bind_param('si', $nuevo_estado, $bug_id);
+                    $stmt->execute();
+                    $stmt->close();
+
+                    $_SESSION['flash_error'] = [
+                        'type' => 'success',
+                        'message' => "Estado actualizado a {$nuevo_estado}."
+                    ];
+                } else {
+                    $_SESSION['flash_error'] = [
+                        'type' => 'error',
+                        'message' => 'Transición de estado no permitida.'
+                    ];
+                }
+            } else {
+                $_SESSION['flash_error'] = [
+                    'type' => 'error',
+                    'message' => 'No puedes actualizar errores que no están asignados a ti.'
+                ];
+            }
+        }
+    }
+
+    header('Location: listar.php');
+    exit;
+}
+
 function buildErrorQuery(mysqli $conn, array $options): array {
     $base = "SELECT e.id_bug, e.titulo_error, e.descripcion_error, e.estado_error, e.fecha_error,\n                     t.nombre_topico, u.user_nombre, u.user_rut,\n                     GROUP_CONCAT(DISTINCT i.nombre_ing ORDER BY i.nombre_ing SEPARATOR ', ') AS ingenieros\n              FROM ErrorBug e\n              INNER JOIN Topico t ON e.id_topico = t.id_topico\n              INNER JOIN Usuario u ON e.user_rut = u.user_rut\n              LEFT JOIN Asignacion_Error ae ON e.id_bug = ae.id_bug\n              LEFT JOIN Ingeniero i ON ae.ing_rut = i.ing_rut";
 
@@ -227,6 +298,7 @@ include '../includes/header.php';
                                 <th>Reportado por</th>
                                 <th>Reseñas</th>
                                 <th>Detalles</th>
+                                <th>Gestionar</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -248,6 +320,31 @@ include '../includes/header.php';
                                         <div class="info-popover">
                                             <p><strong>Descripción:</strong><br><?php echo nl2br(htmlspecialchars($row['descripcion_error'])); ?></p>
                                         </div>
+                                    </td>
+                                    <td>
+                                        <?php if ($row['estado_error'] === 'Abierto'): ?>
+                                            <form method="post" class="status-form">
+                                                <input type="hidden" name="action" value="update_estado">
+                                                <input type="hidden" name="id" value="<?php echo $row['id_bug']; ?>">
+                                                <input type="hidden" name="estado" value="En Progreso">
+                                                <button type="submit" class="status-btn">
+                                                    <i class="fas fa-play"></i> Marcar en progreso
+                                                </button>
+                                            </form>
+                                        <?php elseif ($row['estado_error'] === 'En Progreso'): ?>
+                                            <form method="post" class="status-form">
+                                                <input type="hidden" name="action" value="update_estado">
+                                                <input type="hidden" name="id" value="<?php echo $row['id_bug']; ?>">
+                                                <input type="hidden" name="estado" value="Resuelto">
+                                                <button type="submit" class="status-btn secondary">
+                                                    <i class="fas fa-check"></i> Marcar resuelto
+                                                </button>
+                                            </form>
+                                        <?php elseif ($row['estado_error'] === 'Resuelto'): ?>
+                                            <span class="status-note">En espera de cierre automático</span>
+                                        <?php else: ?>
+                                            <span class="status-note">Sin acciones</span>
+                                        <?php endif; ?>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
@@ -499,6 +596,37 @@ include '../includes/header.php';
 .info-popover p {
     margin: 6px 0;
     font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.status-form {
+    display: inline-block;
+}
+
+.status-btn {
+    background: var(--primary-blue);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: bold;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.status-btn.secondary {
+    background: #28a745;
+}
+
+.status-btn:hover {
+    filter: brightness(1.05);
+}
+
+.status-note {
+    font-size: 12px;
     color: var(--text-secondary);
 }
 </style>

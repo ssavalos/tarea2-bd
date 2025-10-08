@@ -11,6 +11,14 @@ if ($_SESSION['rol'] !== 'ingeniero') {
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 $conn->set_charset('utf8mb4');
 
+$conn->query(
+    "UPDATE ErrorBug
+     SET estado_error = 'Cerrado'
+     WHERE estado_error = 'Resuelto'
+       AND resuelto_en IS NOT NULL
+       AND resuelto_en <= DATE_SUB(NOW(), INTERVAL 3 DAY)"
+);
+
 $page_title = 'Reseñas de Error';
 $css_path = '../';
 $nav_path = '../';

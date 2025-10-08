@@ -58,6 +58,7 @@ CREATE TABLE Funcionalidad (
   resumen_funcion    VARCHAR(150) NOT NULL,
   estado_funcion     ENUM('Abierto','En Progreso','Resuelto','Cerrado') NOT NULL,
   fecha_funcion      DATE NOT NULL,
+  resuelto_en        DATETIME NULL,
   id_topico          INT NOT NULL,
   user_rut           VARCHAR(12) NOT NULL,
   CONSTRAINT fk_func_topico  FOREIGN KEY (id_topico) REFERENCES Topico(id_topico)
@@ -95,6 +96,7 @@ CREATE TABLE ErrorBug (
   descripcion_error VARCHAR(200) NOT NULL,
   fecha_error   DATE NOT NULL,
   estado_error  ENUM('Abierto','En Progreso','Resuelto','Cerrado') NOT NULL,
+  resuelto_en   DATETIME NULL,
   id_topico     INT NOT NULL,
   user_rut      VARCHAR(12) NOT NULL,
   CONSTRAINT fk_bug_topico  FOREIGN KEY (id_topico) REFERENCES Topico(id_topico)
