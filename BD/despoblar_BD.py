@@ -82,30 +82,30 @@ def main():
         affected = cur.rowcount
         print(f"    ✓ ErrorBug: {affected} registros eliminados")
         
-        print("  👷 Eliminando ingenieros...")
-        cur.execute("DELETE FROM Ingeniero")
-        affected = cur.rowcount
-        print(f"    ✓ Ingeniero: {affected} registros eliminados")
-        
-        print("  👥 Eliminando usuarios...")
-        cur.execute("DELETE FROM Usuario")
-        affected = cur.rowcount
-        print(f"    ✓ Usuario: {affected} registros eliminados")
-        
-        print("  📂 Eliminando tópicos...")
-        cur.execute("DELETE FROM Topico")
-        affected = cur.rowcount
-        print(f"    ✓ Topico: {affected} registros eliminados")
-        
-        print("  🔐 Eliminando usuarios de autenticación...")
+        print("  � Eliminando usuarios de autenticación...")
         cur.execute("DELETE FROM Auth_User")
         affected = cur.rowcount
         print(f"    ✓ Auth_User: {affected} registros eliminados")
         
+        print("  � Eliminando ingenieros...")
+        cur.execute("DELETE FROM Ingeniero")
+        affected = cur.rowcount
+        print(f"    ✓ Ingeniero: {affected} registros eliminados")
+        
+        print("  � Eliminando usuarios...")
+        cur.execute("DELETE FROM Usuario")
+        affected = cur.rowcount
+        print(f"    ✓ Usuario: {affected} registros eliminados")
+        
+        print("  � Eliminando tópicos...")
+        cur.execute("DELETE FROM Topico")
+        affected = cur.rowcount
+        print(f"    ✓ Topico: {affected} registros eliminados")
+        
         # Reiniciar auto_increment en las tablas que lo usan
         print("  🔄 Reiniciando contadores auto_increment...")
         auto_increment_tables = [
-            "Topico", "Funcionalidad", "Criterio_Aceptacion", "Resena_Funcionalidad",
+            "Auth_User", "Topico", "Funcionalidad", "Criterio_Aceptacion", "Resena_Funcionalidad",
             "ErrorBug", "Resena_Error"
         ]
         

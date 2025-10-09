@@ -1,11 +1,13 @@
 """
-Script para poblar la base de datos en MySQL
+Script para poblar la base de datos en MySQL 
+link: http://localhost:8888/phpMyAdmin5/index.php?route=/database/structure&db=tarea2
 """
 
 from dotenv import load_dotenv
 import os
 import random
 import datetime
+import hashlib
 from faker import Faker
 import mysql.connector
 from collections import defaultdict, Counter
@@ -81,6 +83,17 @@ def main():
             users
         )
 
+        # Credenciales para usuarios normales (Auth_User)
+        auth_users_normal = []
+        for rut in user_ruts:
+            password_hash = "$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi"  # Hash de "password"
+            auth_users_normal.append((rut, password_hash, 'usuario'))
+        
+        cur.executemany(
+            "INSERT IGNORE INTO Auth_User (rut, pass_hash, rol) VALUES (%s, %s, %s)",
+            auth_users_normal
+        )
+
         # Ingenieros
         ing_ruts, ings = [], []
         for _ in range(NUM_ING):
@@ -90,6 +103,17 @@ def main():
         cur.executemany(
             "INSERT IGNORE INTO Ingeniero (ing_rut, nombre_ing, email_ing) VALUES (%s, %s, %s)",
             ings
+        )
+
+        # Credenciales para ingenieros (Auth_User)
+        auth_users_ing = []
+        for rut in ing_ruts:
+            password_hash = "$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi"  # Hash de "password"
+            auth_users_ing.append((rut, password_hash, 'ingeniero'))
+        
+        cur.executemany(
+            "INSERT IGNORE INTO Auth_User (rut, pass_hash, rol) VALUES (%s, %s, %s)",
+            auth_users_ing
         )
 
         # Especialidades

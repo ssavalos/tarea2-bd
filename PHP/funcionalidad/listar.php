@@ -14,6 +14,8 @@ $search = isset($_GET['q']) ? trim($_GET['q']) : '';
 $estado = isset($_GET['estado']) ? trim($_GET['estado']) : '';
 $topico = isset($_GET['topico']) ? trim($_GET['topico']) : '';
 $ambiente = isset($_GET['ambiente']) ? trim($_GET['ambiente']) : '';
+$fecha_desde = isset($_GET['fecha_desde']) ? trim($_GET['fecha_desde']) : '';
+$fecha_hasta = isset($_GET['fecha_hasta']) ? trim($_GET['fecha_hasta']) : '';
 
 $estados_validos = ['Abierto', 'En Progreso', 'Resuelto', 'Cerrado'];
 $ambientes_validos = ['Web', 'Móvil'];
@@ -141,6 +143,18 @@ function buildFuncionalidadQuery(mysqli $conn, array $options): array {
         $params[] = $options['solo_ingeniero'];
     }
 
+    if (!empty($options['fecha_desde'])) {
+        $where[] = 'f.fecha_funcion >= ?';
+        $types .= 's';
+        $params[] = $options['fecha_desde'];
+    }
+
+    if (!empty($options['fecha_hasta'])) {
+        $where[] = 'f.fecha_funcion <= ?';
+        $types .= 's';
+        $params[] = $options['fecha_hasta'];
+    }
+
     $sql = $base;
     if ($where) {
         $sql .= ' WHERE ' . implode(' AND ', $where);
@@ -175,7 +189,9 @@ $comunes = [
     'buscar' => $search,
     'estado' => in_array($estado, $estados_validos, true) ? $estado : '',
     'topico' => ctype_digit($topico) ? $topico : '',
-    'ambiente' => in_array($ambiente, $ambientes_validos, true) ? $ambiente : ''
+    'ambiente' => in_array($ambiente, $ambientes_validos, true) ? $ambiente : '',
+    'fecha_desde' => $fecha_desde,
+    'fecha_hasta' => $fecha_hasta
 ];
 
 $datos_usuario = [];
@@ -241,6 +257,14 @@ include '../includes/header.php';
                             <option value="<?php echo $amb; ?>" <?php echo ($ambiente === $amb) ? 'selected' : ''; ?>><?php echo $amb; ?></option>
                         <?php endforeach; ?>
                     </select>
+                </div>
+                <div>
+                    <label for="fecha_desde">Fecha desde</label>
+                    <input type="date" id="fecha_desde" name="fecha_desde" value="<?php echo htmlspecialchars($fecha_desde); ?>">
+                </div>
+                <div>
+                    <label for="fecha_hasta">Fecha hasta</label>
+                    <input type="date" id="fecha_hasta" name="fecha_hasta" value="<?php echo htmlspecialchars($fecha_hasta); ?>">
                 </div>
             </div>
             <div class="filters-actions">

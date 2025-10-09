@@ -218,6 +218,81 @@ $page_title = "ZeroPressure";
             box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
             margin-bottom: 20px;
         }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .stat-item {
+            text-align: center;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .stat-number {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--primary-blue);
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            font-size: 11px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .item-actions {
+            display: flex;
+            gap: 5px;
+        }
+        
+        .action-btn-small {
+            background: var(--primary-blue);
+            color: white;
+            padding: 6px 10px;
+            border: none;
+            border-radius: 4px;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 12px;
+        }
+        
+        .action-btn-small:hover {
+            background: var(--primary-blue-hover);
+            transform: translateY(-1px);
+        }
+        
+        .status-abierto { color: #dc3545; font-weight: bold; }
+        .status-en-progreso { color: #fd7e14; font-weight: bold; }
+        .status-resuelto { color: #28a745; font-weight: bold; }
+        .status-cerrado { color: #6c757d; font-weight: bold; }
+        
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .empty-state i {
+            font-size: 48px;
+            color: #ccc;
+            margin-bottom: 15px;
+        }
+        
+        .empty-state p {
+            margin-bottom: 15px;
+        }
     </style>
 </head>
 <body>
@@ -225,7 +300,7 @@ $page_title = "ZeroPressure";
         
         <div class="engineer-info">
             <div class="item-info">
-                <div class="item-title">¡Bienvenido, <?php echo htmlspecialchars($nombre); ?>!</div>
+                <div class="item-title">¡Bienvenido, <?php echo htmlspecialchars($ingeniero_info ? $ingeniero_info['nombre_ing'] : $nombre); ?>!</div>
                 <div class="item-meta">
                     RUT: <?php echo htmlspecialchars($rut); ?> | Rol: Ingeniero
                     <?php if ($ingeniero_info): ?>
@@ -246,15 +321,215 @@ $page_title = "ZeroPressure";
         </div>
         
         <div class="dashboard-grid">
-    
+            <!-- Estadísticas del Ingeniero -->
+            <div class="recent-items">
+                <h3><i class="fas fa-chart-line"></i> Mis Asignaciones</h3>
+                <div class="stats-grid">
+                    <?php
+                    // Contar funcionalidades asignadas al ingeniero
+                    $stmt_func = $conn->prepare("
+                        SELECT COUNT(*) as total, f.estado_funcion 
+                        FROM Asignacion_Funcionalidad af 
+                        JOIN Funcionalidad f ON af.id_funcionalidad = f.id_funcionalidad 
+                        WHERE af.ing_rut = ? 
+                        GROUP BY f.estado_funcion
+                    ");
+                    $func_stats = [];
+                    if ($stmt_func) {
+                        $stmt_func->bind_param("s", $rut);
+                        if ($stmt_func->execute()) {
+                            $result = $stmt_func->get_result();
+                            $func_stats = $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
+                        }
+                        $stmt_func->close();
+                    }
+                    
+                    $func_totals = ['Abierto' => 0, 'En Progreso' => 0, 'Resuelto' => 0, 'Cerrado' => 0];
+                    foreach ($func_stats as $stat) {
+                        $func_totals[$stat['estado_funcion']] = $stat['total'];
+                    }
+                    
+                    // Contar errores asignados al ingeniero
+                    $stmt_error = $conn->prepare("
+                        SELECT COUNT(*) as total, e.estado_error 
+                        FROM Asignacion_Error ae 
+                        JOIN ErrorBug e ON ae.id_bug = e.id_bug 
+                        WHERE ae.ing_rut = ? 
+                        GROUP BY e.estado_error
+                    ");
+                    $error_stats = [];
+                    if ($stmt_error) {
+                        $stmt_error->bind_param("s", $rut);
+                        if ($stmt_error->execute()) {
+                            $result = $stmt_error->get_result();
+                            $error_stats = $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
+                        }
+                        $stmt_error->close();
+                    }
+                    
+                    $error_totals = ['Abierto' => 0, 'En Progreso' => 0, 'Resuelto' => 0, 'Cerrado' => 0];
+                    foreach ($error_stats as $stat) {
+                        $error_totals[$stat['estado_error']] = $stat['total'];
+                    }
+                    
+                    $total_func = array_sum($func_totals);
+                    $total_errors = array_sum($error_totals);
+                    ?>
+                    <div class="stat-item">
+                        <div class="stat-number"><?php echo $total_func; ?></div>
+                        <div class="stat-label">Funcionalidades Asignadas</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number"><?php echo $total_errors; ?></div>
+                        <div class="stat-label">Errores Asignados</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number"><?php echo $func_totals['En Progreso'] + $error_totals['En Progreso']; ?></div>
+                        <div class="stat-label">En Progreso</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number"><?php echo $func_totals['Resuelto'] + $error_totals['Resuelto']; ?></div>
+                        <div class="stat-label">Completadas</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Funcionalidades Asignadas -->
+            <div class="recent-items">
+                <h3><i class="fas fa-tasks"></i> Funcionalidades Asignadas</h3>
+                <?php
+                $stmt_assigned_func = $conn->prepare("
+                    SELECT f.*, t.nombre_topico, u.user_nombre 
+                    FROM Asignacion_Funcionalidad af 
+                    JOIN Funcionalidad f ON af.id_funcionalidad = f.id_funcionalidad 
+                    JOIN Topico t ON f.id_topico = t.id_topico 
+                    JOIN Usuario u ON f.user_rut = u.user_rut 
+                    WHERE af.ing_rut = ? 
+                    ORDER BY 
+                        CASE f.estado_funcion 
+                            WHEN 'En Progreso' THEN 1 
+                            WHEN 'Abierto' THEN 2 
+                            WHEN 'Resuelto' THEN 3 
+                            WHEN 'Cerrado' THEN 4 
+                        END, f.fecha_funcion DESC 
+                    LIMIT 5
+                ");
+                $assigned_funcs = [];
+                if ($stmt_assigned_func) {
+                    $stmt_assigned_func->bind_param("s", $rut);
+                    if ($stmt_assigned_func->execute()) {
+                        $result = $stmt_assigned_func->get_result();
+                        $assigned_funcs = $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
+                    }
+                    $stmt_assigned_func->close();
+                }
+                
+                if ($assigned_funcs): ?>
+                    <ul class="item-list">
+                        <?php foreach ($assigned_funcs as $func): ?>
+                        <li>
+                            <div class="item-info">
+                                <div class="item-title"><?php echo htmlspecialchars($func['titulo_funcion']); ?></div>
+                                <div class="item-meta">
+                                    Solicitado por: <?php echo htmlspecialchars($func['user_nombre']); ?> | 
+                                    <?php echo htmlspecialchars($func['nombre_topico']); ?> | 
+                                    <span class="status-<?php echo strtolower(str_replace(' ', '-', $func['estado_funcion'])); ?>">
+                                        <?php echo $func['estado_funcion']; ?>
+                                    </span> | 
+                                    <?php echo date('d/m/Y', strtotime($func['fecha_funcion'])); ?>
+                                </div>
+                            </div>
+                            <div class="item-actions">
+                                <a href="funcionalidad/editar.php?id=<?php echo $func['id_funcionalidad']; ?>" class="action-btn-small">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                            </div>
+                        </li>
+                        <?php endforeach; ?>
+                    </ul>
+                <?php else: ?>
+                    <div class="empty-state">
+                        <i class="fas fa-inbox"></i>
+                        <p>No tienes funcionalidades asignadas actualmente.</p>
+                    </div>
+                <?php endif; ?>
+            </div>
+
+            <!-- Errores Asignados -->
+            <div class="recent-items">
+                <h3><i class="fas fa-exclamation-triangle"></i> Errores Asignados</h3>
+                <?php
+                $stmt_assigned_errors = $conn->prepare("
+                    SELECT e.*, t.nombre_topico, u.user_nombre 
+                    FROM Asignacion_Error ae 
+                    JOIN ErrorBug e ON ae.id_bug = e.id_bug 
+                    JOIN Topico t ON e.id_topico = t.id_topico 
+                    JOIN Usuario u ON e.user_rut = u.user_rut 
+                    WHERE ae.ing_rut = ? 
+                    ORDER BY 
+                        CASE e.estado_error 
+                            WHEN 'En Progreso' THEN 1 
+                            WHEN 'Abierto' THEN 2 
+                            WHEN 'Resuelto' THEN 3 
+                            WHEN 'Cerrado' THEN 4 
+                        END, e.fecha_error DESC 
+                    LIMIT 5
+                ");
+                $assigned_errors = [];
+                if ($stmt_assigned_errors) {
+                    $stmt_assigned_errors->bind_param("s", $rut);
+                    if ($stmt_assigned_errors->execute()) {
+                        $result = $stmt_assigned_errors->get_result();
+                        $assigned_errors = $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
+                    }
+                    $stmt_assigned_errors->close();
+                }
+                
+                if ($assigned_errors): ?>
+                    <ul class="item-list">
+                        <?php foreach ($assigned_errors as $error): ?>
+                        <li>
+                            <div class="item-info">
+                                <div class="item-title"><?php echo htmlspecialchars($error['titulo_error']); ?></div>
+                                <div class="item-meta">
+                                    Reportado por: <?php echo htmlspecialchars($error['user_nombre']); ?> | 
+                                    <?php echo htmlspecialchars($error['nombre_topico']); ?> | 
+                                    <span class="status-<?php echo strtolower(str_replace(' ', '-', $error['estado_error'])); ?>">
+                                        <?php echo $error['estado_error']; ?>
+                                    </span> | 
+                                    <?php echo date('d/m/Y', strtotime($error['fecha_error'])); ?>
+                                </div>
+                            </div>
+                            <div class="item-actions">
+                                <a href="error/editar.php?id=<?php echo $error['id_bug']; ?>" class="action-btn-small">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                            </div>
+                        </li>
+                        <?php endforeach; ?>
+                    </ul>
+                <?php else: ?>
+                    <div class="empty-state">
+                        <i class="fas fa-inbox"></i>
+                        <p>No tienes errores asignados actualmente.</p>
+                    </div>
+                <?php endif; ?>
+            </div>
+        </div>
         
         <!-- Acciones Rápidas -->
         <div class="quick-actions">
             <a href="funcionalidad/listar.php" class="action-btn">
-                <i class="fas fa-cogs"></i> Ver Funcionalidades
+                <i class="fas fa-tasks"></i> Mis Funcionalidades
             </a>
             <a href="error/listar.php" class="action-btn">
-                <i class="fas fa-bug"></i> Ver Errores
+                <i class="fas fa-exclamation-triangle"></i> Mis Errores
+            </a>
+            <a href="funcionalidad/listar.php" class="action-btn">
+                <i class="fas fa-cogs"></i> Todas las Funcionalidades
+            </a>
+            <a href="error/listar.php" class="action-btn">
+                <i class="fas fa-bug"></i> Todos los Errores
             </a>
             <a href="logout.php" class="action-btn secondary">
                 <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
