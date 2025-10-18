@@ -11,41 +11,6 @@ if ($_SESSION['rol'] !== 'usuario') {
     exit;
 }
 
-function autoAsignarError(mysqli $conn, int $bug_id, int $topico_id): void
-{
-    $stmt = $conn->prepare(
-        "SELECT ie.ing_rut
-         FROM Ingeniero_Especialidad ie
-         LEFT JOIN (
-             SELECT ing_rut, COUNT(*) AS total
-             FROM Asignacion_Error
-             GROUP BY ing_rut
-         ) asign ON ie.ing_rut = asign.ing_rut
-         WHERE ie.id_topico = ?
-         ORDER BY COALESCE(asign.total, 0), ie.ing_rut
-         LIMIT 3"
-    );
-    $stmt->bind_param('i', $topico_id);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    $ingenieros = $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
-    $stmt->close();
-
-    if (empty($ingenieros)) {
-        return;
-    }
-
-    $stmtInsert = $conn->prepare('INSERT IGNORE INTO Asignacion_Error (id_bug, ing_rut) VALUES (?, ?)');
-    $bugParam = $bug_id;
-    $ingParam = null;
-    $stmtInsert->bind_param('is', $bugParam, $ingParam);
-    foreach ($ingenieros as $row) {
-        $ingParam = $row['ing_rut'];
-        $stmtInsert->execute();
-    }
-    $stmtInsert->close();
-}
-
 $page_title = 'Reportar error';
 $css_path = '../';
 $nav_path = '../';
@@ -105,15 +70,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         try {
             $conn->begin_transaction();
 
-            $stmt = $conn->prepare('INSERT INTO ErrorBug (titulo_error, descripcion_error, fecha_error, estado_error, id_topico, user_rut) VALUES (?, ?, ?, ?, ?, ?)');
             $estado = 'Abierto';
+            $stmt = $conn->prepare('INSERT INTO ErrorBug (titulo_error, descripcion_error, fecha_error, estado_error, id_topico, user_rut) VALUES (?, ?, ?, ?, ?, ?)');
             $topicoId = (int)$topico;
-            $stmt->bind_param('ssssis', $titulo, $descripcion, $fecha_hoy, $estado, $topicoId, $rut);
+            $stmt->bind_param('ssssss', $titulo, $descripcion, $fecha_hoy, $estado, $topicoId, $rut);
             $stmt->execute();
             $bug_id = $stmt->insert_id;
             $stmt->close();
 
-            autoAsignarError($conn, $bug_id, $topicoId);
+            $stmtProc = $conn->prepare('CALL sp_asignar_error(?, ?)');
+            $stmtProc->bind_param('ii', $bug_id, $topicoId);
+            $stmtProc->execute();
+            $stmtProc->close();
+            while ($conn->more_results() && $conn->next_result()) {}
 
             $conn->commit();
 
@@ -167,7 +136,7 @@ include '../includes/header.php';
 
             <div class="form-field full">
                 <label for="descripcion">Descripción</label>
-                <textarea id="descripcion" name="descripcion" maxlength="200" rows="4" required><?php echo htmlspecialchars($descripcion); ?></textarea>
+                <textarea id="descripcion" name="descripcion" maxlength=200 rows="4" required><?php echo htmlspecialchars($descripcion); ?></textarea>
             </div>
 
             <div class="form-actions">

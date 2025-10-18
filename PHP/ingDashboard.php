@@ -142,6 +142,10 @@ $page_title = "ZeroPressure";
             color: #333;
             margin-bottom: 4px;
         }
+
+        .especialidades strong {
+            color: #333;
+        }
         
         .item-meta {
             font-size: 12px;
@@ -440,7 +444,7 @@ $page_title = "ZeroPressure";
                                 </div>
                             </div>
                             <div class="item-actions">
-                                <a href="funcionalidad/editar.php?id=<?php echo $func['id_funcionalidad']; ?>" class="action-btn-small">
+                                <a href="funcionalidad/reviews.php?id=<?php echo $func['id_funcionalidad']; ?>" class="action-btn-small">
                                     <i class="fas fa-edit"></i>
                                 </a>
                             </div>
@@ -501,7 +505,7 @@ $page_title = "ZeroPressure";
                                 </div>
                             </div>
                             <div class="item-actions">
-                                <a href="error/editar.php?id=<?php echo $error['id_bug']; ?>" class="action-btn-small">
+                                <a href="error/reviews.php?id=<?php echo $error['id_bug']; ?>" class="action-btn-small">
                                     <i class="fas fa-edit"></i>
                                 </a>
                             </div>
@@ -519,12 +523,6 @@ $page_title = "ZeroPressure";
         
         <!-- Acciones Rápidas -->
         <div class="quick-actions">
-            <a href="funcionalidad/listar.php" class="action-btn">
-                <i class="fas fa-tasks"></i> Mis Funcionalidades
-            </a>
-            <a href="error/listar.php" class="action-btn">
-                <i class="fas fa-exclamation-triangle"></i> Mis Errores
-            </a>
             <a href="funcionalidad/listar.php" class="action-btn">
                 <i class="fas fa-cogs"></i> Todas las Funcionalidades
             </a>

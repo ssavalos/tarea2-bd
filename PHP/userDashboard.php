@@ -118,6 +118,10 @@ $page_title = "ZeroPressure";
             color: #333;
             margin-bottom: 4px;
         }
+
+        .user-section-title {
+            color: var(--primary-blue);
+        }
         
         .item-meta {
             font-size: 12px;
@@ -187,7 +191,7 @@ $page_title = "ZeroPressure";
         .stat-number {
             font-size: 24px;
             font-weight: bold;
-            color: var(--primary-blue);
+            color: #333;
             margin-bottom: 5px;
         }
         
@@ -258,7 +262,7 @@ $page_title = "ZeroPressure";
         <div class="dashboard-grid">
             <!-- Estadísticas Rápidas -->
             <div class="glass-card">
-                <h3><i class="fas fa-chart-line"></i> Mis Estadísticas</h3>
+                <h3 class="user-section-title"><i class="fas fa-chart-line"></i> Mis Estadísticas</h3>
                 <div class="stats-grid">
                     <?php
                     // Contar funcionalidades del usuario
@@ -305,7 +309,7 @@ $page_title = "ZeroPressure";
 
             <!-- Mis Funcionalidades Recientes -->
             <div class="glass-card">
-                <h3><i class="fas fa-cogs"></i> Mis Funcionalidades Recientes</h3>
+                <h3 class="user-section-title"><i class="fas fa-cogs"></i> Mis Funcionalidades Recientes</h3>
                 <?php
                 $stmt_recent_func = $conn->prepare("
                     SELECT f.*, t.nombre_topico 
@@ -355,7 +359,7 @@ $page_title = "ZeroPressure";
 
             <!-- Mis Errores Recientes -->
             <div class="glass-card">
-                <h3><i class="fas fa-bug"></i> Mis Errores Recientes</h3>
+                <h3 class="user-section-title"><i class="fas fa-bug"></i> Mis Errores Recientes</h3>
                 <?php
                 $stmt_recent_errors = $conn->prepare("
                     SELECT e.*, t.nombre_topico 
@@ -413,10 +417,10 @@ $page_title = "ZeroPressure";
                 <i class="fas fa-plus"></i> Reportar Error
             </a>
             <a href="funcionalidad/listar.php" class="action-btn">
-                <i class="fas fa-cogs"></i> Ver Todas las Funcionalidades
+                <i class="fas fa-cogs"></i> Ver mis Funcionalidades
             </a>
             <a href="error/listar.php" class="action-btn">
-                <i class="fas fa-bug"></i> Ver Todos los Errores
+                <i class="fas fa-bug"></i> Ver mis Errores
             </a>
             <a href="logout.php" class="action-btn secondary">
                 <i class="fas fa-sign-out-alt"></i> Cerrar Sesión

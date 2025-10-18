@@ -11,41 +11,6 @@ if ($_SESSION['rol'] !== 'usuario') {
     exit;
 }
 
-function autoAsignarFuncionalidad(mysqli $conn, int $func_id, int $topico_id): void
-{
-    $stmt = $conn->prepare(
-        "SELECT ie.ing_rut
-         FROM Ingeniero_Especialidad ie
-         LEFT JOIN (
-             SELECT ing_rut, COUNT(*) AS total
-             FROM Asignacion_Funcionalidad
-             GROUP BY ing_rut
-         ) asign ON ie.ing_rut = asign.ing_rut
-         WHERE ie.id_topico = ?
-         ORDER BY COALESCE(asign.total, 0), ie.ing_rut
-         LIMIT 3"
-    );
-    $stmt->bind_param('i', $topico_id);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    $ingenieros = $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
-    $stmt->close();
-
-    if (empty($ingenieros)) {
-        return;
-    }
-
-    $stmtInsert = $conn->prepare('INSERT IGNORE INTO Asignacion_Funcionalidad (id_funcionalidad, ing_rut) VALUES (?, ?)');
-    $funcParam = $func_id;
-    $ingParam = null;
-    $stmtInsert->bind_param('is', $funcParam, $ingParam);
-    foreach ($ingenieros as $row) {
-        $ingParam = $row['ing_rut'];
-        $stmtInsert->execute();
-    }
-    $stmtInsert->close();
-}
-
 $page_title = 'Registrar funcionalidad';
 $css_path = '../';
 $nav_path = '../';
@@ -141,7 +106,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             $stmtCrit->close();
 
-            autoAsignarFuncionalidad($conn, $func_id, $topicoId);
+            $stmtProc = $conn->prepare('CALL sp_asignar_funcionalidad(?, ?)');
+            $stmtProc->bind_param('ii', $func_id, $topicoId);
+            $stmtProc->execute();
+            $stmtProc->close();
+            while ($conn->more_results() && $conn->next_result()) {}
 
             $conn->commit();
 
