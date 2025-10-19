@@ -2,9 +2,9 @@
 
 $host = "localhost";
 $user = "root";
-$pass = "root";      // ✅ MAMP usa 'root' como contraseña, xampp usa "" (CAMBIA CUANDO USES)
+$pass = "root";      // MAMP usa 'root' como contraseña, xampp usa "" (CAMBIA CUANDO USES)
 $db   = "tarea2";
-$port = 8889;        // ✅ puerto por defecto de MySQL en MAMP (8889), xampp usa 3306 (CAMBIA CUANDO USES)
+$port = 8889;        // puerto por defecto de MySQL en MAMP (8889), xampp usa 3306 (CAMBIA CUANDO USES)
 
 $conn = new mysqli($host, $user, $pass, $db, $port);
 
@@ -12,5 +12,5 @@ $conn = new mysqli($host, $user, $pass, $db, $port);
 if ($conn->connect_error) {
     die("Error de conexión: " . $conn->connect_error);
 }
-// echo "✅ Conectado a MySQL correctamente";
+
 ?>
