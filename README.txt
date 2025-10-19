@@ -89,7 +89,7 @@ PASO 2: CREAR LA BASE DE DATOS
 -------------------------------
 Tienes 3 opciones para importar la base de datos:
 
-OPCIÓN A - Importación completa (Recomendado):
+OPCIÓN A - Importación completa (Recomendado y pobladas):
    1. Abrir phpMyAdmin (http://localhost:8888/phpMyAdmin o similar)
    2. Importar el archivo: BD/tarea2sof.sql o BD/tarea2nes.sql
 
@@ -110,7 +110,7 @@ IMPORTANTE: Si usas la OPCIÓN B, la base de datos estará vacía.
             Continúa con el PASO 3 para poblarla con datos de prueba.
 
 
-PASO 3: POBLAR CON DATOS DE PRUEBA 
+PASO 3: POBLAR CON DATOS DE PRUEBA, (solo usar este script si se usó la opción B más arriba.)
 ---------------------------------------------------------------
 1. Navegar a la carpeta BD:
    $ cd BD
@@ -121,7 +121,7 @@ PASO 3: POBLAR CON DATOS DE PRUEBA
 3. Configurar el archivo .env en la raíz del proyecto:
    DB_NAME=tarea2
    DB_USER=root
-   DB_PASS=root
+   DB_PASS=root        # "" si usas XAMPP
    DB_HOST=localhost
    DB_PORT=8889        # Cambiar a 3306 si usas XAMPP
 
