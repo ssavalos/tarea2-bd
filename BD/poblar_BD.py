@@ -60,8 +60,20 @@ def main():
         # Deshabilitar triggers temporalmente
         cur.execute("DROP TRIGGER IF EXISTS trg_min_3_criterios")
         cur.execute("DROP TRIGGER IF EXISTS trg_max_2_especialidades")
+        cur.execute("DROP TRIGGER IF EXISTS trg_limite_diario_func")
+        cur.execute("DROP TRIGGER IF EXISTS trg_limite_diario_error")
+        cur.execute("DROP TRIGGER IF EXISTS trg_bloqueo_update_func")
+        cur.execute("DROP TRIGGER IF EXISTS trg_bloqueo_delete_func")
+        cur.execute("DROP TRIGGER IF EXISTS trg_bloqueo_update_error")
+        cur.execute("DROP TRIGGER IF EXISTS trg_bloqueo_delete_error")
+        cur.execute("DROP TRIGGER IF EXISTS trg_no_titulo_duplicado_func")
+        cur.execute("DROP TRIGGER IF EXISTS trg_no_titulo_duplicado_func_update")
+        cur.execute("DROP TRIGGER IF EXISTS trg_no_titulo_duplicado_error")
+        cur.execute("DROP TRIGGER IF EXISTS trg_no_titulo_duplicado_error_update")
+        cur.execute("DROP TRIGGER IF EXISTS trg_max_20_asignaciones_func")
+        cur.execute("DROP TRIGGER IF EXISTS trg_max_20_asignaciones_error")
         
-        # T??picos
+        # Tópicos
         topics = [
             (1, "Backend"), (2, "Seguridad"), (3, "UX/UI"), (4, "DevOps"),
             (5, "Machine Learning"), (6, "Testing"), (7, "Cloud"),

@@ -115,7 +115,7 @@ FOR EACH ROW
 BEGIN
   DECLARE n INT;
   SELECT COUNT(*) INTO n FROM Funcionalidad 
-  WHERE user_rut = NEW.user_rut AND DATE(fecha_creacion) = CURDATE();
+  WHERE user_rut = NEW.user_rut AND DATE(fecha_funcion) = CURDATE();
   IF n >= 25 THEN
     SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Has alcanzado el máximo de 25 funcionalidades por día.';
   END IF;
